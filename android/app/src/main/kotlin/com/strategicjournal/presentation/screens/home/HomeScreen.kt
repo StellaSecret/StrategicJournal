@@ -35,6 +35,35 @@ fun HomeScreen(
     val pendingReviews by viewModel.pendingReviews.collectAsState()
     val syncState by viewModel.syncState.collectAsState()
 
+    // Handle Drive auth events
+    val context = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is HomeUiEvent.RequestGoogleSignIn -> {
+                    val signInIntent = com.google.android.gms.auth.api.signin.GoogleSignIn
+                        .getClient(
+                            context,
+                            com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
+                                com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
+                            )
+                            .requestEmail()
+                            .requestScopes(com.google.android.gms.common.api.Scope(com.google.api.services.drive.DriveScopes.DRIVE_APPDATA))
+                            .build()
+                        )
+                        .signInIntent
+                    (context as? androidx.activity.ComponentActivity)?.startActivity(signInIntent)
+                }
+                is HomeUiEvent.SignOutGoogle -> {
+                    com.google.android.gms.auth.api.signin.GoogleSignIn
+                        .getClient(context, com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .signOut()
+                }
+                else -> {}
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -53,6 +82,11 @@ fun HomeScreen(
                     }
                 },
                 actions = {
+                    DriveAuthButton(
+                        isAuthenticated = viewModel.isDriveAuthenticated.collectAsState().value,
+                        onSignIn = viewModel::signInWithGoogle,
+                        onSignOut = viewModel::signOutGoogle
+                    )
                     SyncIndicator(syncState = syncState, onSync = viewModel::syncNow)
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -223,6 +257,33 @@ private fun StatChip(count: Int, label: String, color: androidx.compose.ui.graph
             color = color,
             fontWeight = FontWeight.SemiBold
         )
+    }
+}
+
+@Composable
+private fun DriveAuthButton(
+    isAuthenticated: Boolean,
+    onSignIn: () -> Unit,
+    onSignOut: () -> Unit
+) {
+    if (isAuthenticated) {
+        IconButton(onClick = onSignOut) {
+            Icon(
+                Icons.Default.CloudDone,
+                contentDescription = "Connected to Drive — tap to disconnect",
+                tint = JournalColors.Correct,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    } else {
+        IconButton(onClick = onSignIn) {
+            Icon(
+                Icons.Default.CloudOff,
+                contentDescription = "Connect Google Drive",
+                tint = JournalColors.Slate,
+                modifier = Modifier.size(20.dp)
+            )
+        }
     }
 }
 

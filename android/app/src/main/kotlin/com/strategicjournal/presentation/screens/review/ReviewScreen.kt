@@ -188,7 +188,12 @@ private fun ReviewedPredictionCard(prediction: Prediction) {
 @Composable
 private fun DecisionsTab(state: ReviewUiState, viewModel: ReviewViewModel) {
     if (state.pendingDecisions.isEmpty() && state.reviewedDecisions.isEmpty()) {
-        EmptyState("No decisions to review yet.\nDecisions appear here after their review window passes.")
+        EmptyState(
+            message = "No decisions to review yet",
+            subMessage = state.nextDecisionReviewInfo.ifBlank {
+                "Decisions appear here after their review window passes (default: 4 weeks after entry)."
+            }
+        )
         return
     }
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -358,8 +363,14 @@ private fun SectionLabel(text: String) {
 }
 
 @Composable
-private fun EmptyState(message: String) {
+private fun EmptyState(message: String, subMessage: String = "") {
     Box(modifier = Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
-        Text(message, style = MaterialTheme.typography.bodyMedium, color = JournalColors.Slate)
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(message, style = MaterialTheme.typography.bodyMedium, color = JournalColors.Slate)
+            if (subMessage.isNotBlank()) {
+                Text(subMessage, style = MaterialTheme.typography.bodySmall, color = JournalColors.InkMuted,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            }
+        }
     }
 }

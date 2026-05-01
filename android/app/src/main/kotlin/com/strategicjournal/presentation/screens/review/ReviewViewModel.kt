@@ -22,6 +22,7 @@ data class ReviewUiState(
     val reviewedPredictions: List<EntryPrediction> = emptyList(),
     val pendingDecisions: List<EntryDecision> = emptyList(),
     val reviewedDecisions: List<EntryDecision> = emptyList(),
+    val nextDecisionReviewInfo: String = "",
     // Analytics
     val predictionAccuracy: Float = 0f,
     val wouldRepeatRate: Float = 0f,
@@ -98,11 +99,24 @@ class ReviewViewModel @Inject constructor(
             reviewed.sumOf { it.confidence.toDouble() }.toFloat() / reviewed.size / 100f else 0f
         val calibrationScore = 1f - kotlin.math.abs(avgConf - predictionAccuracy)
 
+        // Find the soonest upcoming decision review
+        val nextReview = entries.flatMap { entry ->
+            entry.decisions
+                .filter { it.reviewedAt == null }
+                .map { d -> LocalDate.parse(entry.date).plusWeeks(d.reviewAfterWeeks.toLong()) }
+        }.filter { it.isAfter(today) }.minOrNull()
+
+        val nextReviewInfo = if (nextReview != null) {
+            val daysUntil = today.until(nextReview, ChronoUnit.DAYS)
+            "Next review due in $daysUntil day${if (daysUntil == 1L) "" else "s"} ($nextReview)"
+        } else ""
+
         return ReviewUiState(
             pendingPredictions = pendingPredictions,
             reviewedPredictions = reviewedPredictions,
             pendingDecisions = pendingDecisions,
             reviewedDecisions = reviewedDecisions,
+            nextDecisionReviewInfo = nextReviewInfo,
             predictionAccuracy = predictionAccuracy,
             wouldRepeatRate = wouldRepeatRate,
             avgOutcomeRating = avgOutcomeRating,

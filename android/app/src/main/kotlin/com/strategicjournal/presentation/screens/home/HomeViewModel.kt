@@ -29,6 +29,24 @@ class HomeViewModel @Inject constructor(
     private val _uiEvent = MutableSharedFlow<HomeUiEvent>()
     val uiEvent: SharedFlow<HomeUiEvent> = _uiEvent
 
+    val isDriveAuthenticated: StateFlow<Boolean> = repository.observeSyncState()
+        .map { it !is SyncState.NotAuthenticated }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    fun signInWithGoogle() {
+        // Trigger is handled by the Activity via GoogleSignIn intent
+        // ViewModel emits an event that the screen catches
+        viewModelScope.launch {
+            _uiEvent.emit(HomeUiEvent.RequestGoogleSignIn)
+        }
+    }
+
+    fun signOutGoogle() {
+        viewModelScope.launch {
+            _uiEvent.emit(HomeUiEvent.SignOutGoogle)
+        }
+    }
+
     fun syncNow() {
         viewModelScope.launch {
             val result = repository.syncToDrive()
@@ -46,4 +64,6 @@ class HomeViewModel @Inject constructor(
 
 sealed class HomeUiEvent {
     data class ShowError(val message: String) : HomeUiEvent()
+    object RequestGoogleSignIn : HomeUiEvent()
+    object SignOutGoogle : HomeUiEvent()
 }
