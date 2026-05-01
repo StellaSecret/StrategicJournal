@@ -59,7 +59,7 @@ jobs:
         working-directory: web
         run: npm run build
         env:
-          VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID_WEB }}
           VITE_APP_VERSION: ${{ github.sha }}
 
       - name: Setup Pages

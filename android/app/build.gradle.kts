@@ -21,7 +21,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Google OAuth client ID — set via environment variable or local.properties
-        manifestPlaceholders["googleClientId"] = project.findProperty("GOOGLE_CLIENT_ID") as String? ?: ""
+        manifestPlaceholders["googleClientId"] = project.findProperty("GOOGLE_CLIENT_ID_ANDROID") as String? ?: ""
     }
 
     signingConfigs {
