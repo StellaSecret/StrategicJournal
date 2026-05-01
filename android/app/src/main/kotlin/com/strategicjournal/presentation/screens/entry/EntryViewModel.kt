@@ -36,14 +36,12 @@ class EntryViewModel @Inject constructor(
             val entry = if (entryId != null) {
                 repository.getEntry(entryId)
             } else {
-                // Check if today already has an entry
                 repository.getEntryByDate(LocalDate.now().toString())
             }
 
             if (entry != null) {
                 _state.update { it.copy(entry = entry, isEditing = false) }
             } else {
-                // Create new entry for today
                 _state.update {
                     it.copy(
                         entry = JournalEntry(
@@ -79,8 +77,11 @@ class EntryViewModel @Inject constructor(
             id = UUID.randomUUID().toString(),
             statement = statement,
             rationale = rationale,
+            alternatives = emptyList(),
             decisionType = type,
-            reversible = reversible
+            reversible = reversible,
+            tags = emptyList(),
+            reviewAfterWeeks = 4
         )
         _state.update { s ->
             s.copy(entry = s.entry?.copy(
@@ -96,12 +97,37 @@ class EntryViewModel @Inject constructor(
             statement = statement,
             expectedOutcome = expectedOutcome,
             deadline = deadline,
-            confidence = confidence
+            confidence = confidence,
+            tags = emptyList()
         )
         _state.update { s ->
             s.copy(entry = s.entry?.copy(
                 predictions = s.entry.predictions + prediction,
                 updatedAt = LocalDateTime.now().toString()
+            ))
+        }
+    }
+
+    fun removeHypothesis(id: String) {
+        _state.update { s ->
+            s.copy(entry = s.entry?.copy(
+                hypotheses = s.entry.hypotheses.filter { it.id != id }
+            ))
+        }
+    }
+
+    fun removeDecision(id: String) {
+        _state.update { s ->
+            s.copy(entry = s.entry?.copy(
+                decisions = s.entry.decisions.filter { it.id != id }
+            ))
+        }
+    }
+
+    fun removePrediction(id: String) {
+        _state.update { s ->
+            s.copy(entry = s.entry?.copy(
+                predictions = s.entry.predictions.filter { it.id != id }
             ))
         }
     }

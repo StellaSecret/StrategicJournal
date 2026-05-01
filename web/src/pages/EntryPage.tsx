@@ -246,7 +246,7 @@ function DecisionForm({ onAdd }: { onAdd: (d: Decision) => void }) {
 
   const submit = () => {
     if (!statement.trim()) return
-    onAdd({ id: crypto.randomUUID(), statement, rationale, alternatives: [], decisionType: type, reversible, outcomeNote: null, reviewedAt: null })
+    onAdd({ id: crypto.randomUUID(), statement, rationale, alternatives: [], decisionType: type, reversible, tags: [], reviewAfterWeeks: 4, outcomeNote: null, wouldRepeat: null, outcomeRating: null, reviewedAt: null })
     setStatement(''); setRationale('')
   }
   return (
@@ -275,7 +275,7 @@ function PredictionForm({ onAdd }: { onAdd: (p: Prediction) => void }) {
 
   const submit = () => {
     if (!statement.trim()) return
-    onAdd({ id: crypto.randomUUID(), statement, expectedOutcome, deadline, confidence, actualOutcome: null, wasCorrect: null, reviewedAt: null, score: null })
+    onAdd({ id: crypto.randomUUID(), statement, expectedOutcome, deadline, confidence, tags: [], actualOutcome: null, wasCorrect: null, reviewedAt: null, score: null })
     setStatement(''); setExpectedOutcome('')
   }
   return (

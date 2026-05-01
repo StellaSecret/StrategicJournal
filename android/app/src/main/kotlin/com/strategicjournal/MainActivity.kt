@@ -11,7 +11,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.strategicjournal.presentation.screens.entry.EntryScreen
 import com.strategicjournal.presentation.screens.home.HomeScreen
+import com.strategicjournal.presentation.screens.review.ReviewScreen
 import com.strategicjournal.presentation.theme.StrategicJournalTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -33,14 +35,15 @@ object Routes {
     const val HOME = "home"
     const val ENTRY = "entry?entryId={entryId}"
     const val REVIEW = "review"
-    const val SETTINGS = "settings"
 
-    fun entry(entryId: String? = null) = if (entryId != null) "entry?entryId=$entryId" else "entry"
+    fun entry(entryId: String? = null) =
+        if (entryId != null) "entry?entryId=$entryId" else "entry"
 }
 
 @Composable
 fun AppNavHost(navController: NavHostController) {
     NavHost(navController = navController, startDestination = Routes.HOME) {
+
         composable(Routes.HOME) {
             HomeScreen(
                 onNavigateToEntry = { id -> navController.navigate(Routes.entry(id)) },
@@ -58,16 +61,11 @@ fun AppNavHost(navController: NavHostController) {
                 }
             )
         ) {
-            // EntryScreen — composable defined separately
-            // EntryScreen(onBack = { navController.popBackStack() })
+            EntryScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Routes.REVIEW) {
-            // ReviewScreen()
-        }
-
-        composable(Routes.SETTINGS) {
-            // SettingsScreen()
+            ReviewScreen(onBack = { navController.popBackStack() })
         }
     }
 }
