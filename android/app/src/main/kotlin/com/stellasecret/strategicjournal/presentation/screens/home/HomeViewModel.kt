@@ -8,13 +8,15 @@ import com.stellasecret.strategicjournal.domain.repository.SyncResult
 import com.stellasecret.strategicjournal.domain.repository.SyncState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
+import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val repository: JournalRepository
+    private val repository: JournalRepository,
+    private val driveDataSource: com.stellasecret.strategicjournal.data.remote.GoogleDriveDataSource
 ) : ViewModel() {
 
     val entries: StateFlow<List<JournalEntry>> = repository.observeEntries()
@@ -29,9 +31,29 @@ class HomeViewModel @Inject constructor(
     private val _uiEvent = MutableSharedFlow<HomeUiEvent>()
     val uiEvent: SharedFlow<HomeUiEvent> = _uiEvent
 
-    val isDriveAuthenticated: StateFlow<Boolean> = repository.observeSyncState()
-        .map { it !is SyncState.NotAuthenticated }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    // Check auth directly from GoogleSignIn — reliable source of truth
+    private val _isDriveAuthenticated = MutableStateFlow(driveDataSource.isAuthenticated())
+    val isDriveAuthenticated: StateFlow<Boolean> = _isDriveAuthenticated.asStateFlow()
+
+    init {
+        // Observe auth state changes triggered by sign-in/sign-out in MainActivity
+        viewModelScope.launch {
+            var previousAuthState = driveDataSource.isAuthenticated()
+            snapshotFlow { com.stellasecret.strategicjournal.MainActivity.authStateChanged.value }
+                .collect {
+                    val isNowAuthenticated = driveDataSource.isAuthenticated()
+                    _isDriveAuthenticated.value = isNowAuthenticated
+
+                    // Just signed in → pull data from Drive
+                    if (isNowAuthenticated && !previousAuthState) {
+                        timber.log.Timber.d("Drive auth: signed in, pulling data...")
+                        val result = repository.syncFromDrive()
+                        timber.log.Timber.d("Drive pull result: $result")
+                    }
+                    previousAuthState = isNowAuthenticated
+                }
+        }
+    }
 
     fun signInWithGoogle() {
         // Trigger is handled by the Activity via GoogleSignIn intent

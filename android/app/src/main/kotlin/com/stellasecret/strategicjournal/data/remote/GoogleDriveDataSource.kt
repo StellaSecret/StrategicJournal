@@ -1,8 +1,10 @@
 package com.stellasecret.strategicjournal.data.remote
 
 import android.content.Context
+import android.util.Log
+import com.google.android.gms.auth.GoogleAuthUtil
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.client.http.HttpRequestInitializer
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.drive.Drive
@@ -17,52 +19,48 @@ import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private const val TAG = "SJ_DRIVE"
+
+@Suppress("DEPRECATION")
 @Singleton
 class GoogleDriveDataSource @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
 
-    private fun buildDriveService(): Drive? {
-        val account = GoogleSignIn.getLastSignedInAccount(context) ?: return null
-        val credential = GoogleAccountCredential.usingOAuth2(
-            context, listOf(DriveScopes.DRIVE_APPDATA)
-        ).apply { selectedAccount = account.account }
+    /**
+     * Build Drive service using a raw OAuth2 token from GoogleAuthUtil.
+     * This avoids GoogleAccountCredential which has internal GMS class conflicts.
+     */
+    private suspend fun buildDriveService(): Drive? = withContext(Dispatchers.IO) {
+        val account = GoogleSignIn.getLastSignedInAccount(context) ?: run {
+            Log.e(TAG, "buildDriveService: no signed-in account")
+            return@withContext null
+        }
 
-        return Drive.Builder(
-            NetHttpTransport(),
-            GsonFactory.getDefaultInstance(),
-            credential
-        ).setApplicationName("StrategicJournal").build()
-    }
+        val androidAccount = account.account ?: run {
+            Log.e(TAG, "buildDriveService: account.account is null")
+            return@withContext null
+        }
 
-    suspend fun uploadEntry(
-        entryId: String,
-        date: String,
-        jsonContent: String,
-        existingFileId: String?
-    ): String? = withContext(Dispatchers.IO) {
         try {
-            val drive = buildDriveService() ?: return@withContext null
-            val content = ByteArrayInputStream(jsonContent.toByteArray())
-            val mediaContent = com.google.api.client.http.InputStreamContent("application/json", content)
+            // Get OAuth2 token directly — no internal GMS classes needed
+            val scope = "oauth2:${DriveScopes.DRIVE_APPDATA}"
+            val token = GoogleAuthUtil.getToken(context, androidAccount, scope)
+            Log.d(TAG, "buildDriveService: token obtained for ${account.email}")
 
-            if (existingFileId != null) {
-                drive.files().update(existingFileId, null, mediaContent).execute()
-                Timber.d("Drive: updated entry $entryId")
-                existingFileId
-            } else {
-                val fileMetadata = File().apply {
-                    name = "entry_${date}_${entryId}.json"
-                    parents = listOf("appDataFolder")
-                }
-                val file = drive.files().create(fileMetadata, mediaContent)
-                    .setFields("id")
-                    .execute()
-                Timber.d("Drive: created entry $entryId → ${file.id}")
-                file.id
+            val initializer = HttpRequestInitializer { request ->
+                request.headers.authorization = "Bearer $token"
+                request.connectTimeout = 30_000
+                request.readTimeout = 30_000
             }
+
+            Drive.Builder(
+                NetHttpTransport(),
+                GsonFactory.getDefaultInstance(),
+                initializer
+            ).setApplicationName("StrategicJournal").build()
         } catch (e: Exception) {
-            Timber.e(e, "Drive upload failed for entry $entryId")
+            Log.e(TAG, "buildDriveService: failed to get token: ${e.message}", e)
             null
         }
     }
@@ -75,10 +73,45 @@ class GoogleDriveDataSource @Inject constructor(
                 .setFields("files(id, name, modifiedTime)")
                 .setQ("name contains 'entry_'")
                 .execute()
+            Log.d(TAG, "listEntryFiles: found ${result.files.size} files")
             result.files.map { DriveFile(it.id, it.name, it.modifiedTime?.toStringRfc3339()) }
         } catch (e: Exception) {
-            Timber.e(e, "Drive list failed")
+            Log.e(TAG, "listEntryFiles failed: ${e.message}", e)
             emptyList()
+        }
+    }
+
+    suspend fun uploadEntry(
+        entryId: String,
+        date: String,
+        jsonContent: String,
+        existingFileId: String?
+    ): String? = withContext(Dispatchers.IO) {
+        try {
+            val drive = buildDriveService() ?: return@withContext null
+            val content = ByteArrayInputStream(jsonContent.toByteArray())
+            val mediaContent = com.google.api.client.http.InputStreamContent(
+                "application/json", content
+            )
+
+            if (existingFileId != null) {
+                drive.files().update(existingFileId, null, mediaContent).execute()
+                Log.d(TAG, "uploadEntry: updated $entryId")
+                existingFileId
+            } else {
+                val fileMetadata = File().apply {
+                    name = "entry_${date}_${entryId}.json"
+                    parents = listOf("appDataFolder")
+                }
+                val file = drive.files().create(fileMetadata, mediaContent)
+                    .setFields("id")
+                    .execute()
+                Log.d(TAG, "uploadEntry: created $entryId → ${file.id}")
+                file.id
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "uploadEntry failed for $entryId: ${e.message}", e)
+            null
         }
     }
 
@@ -89,7 +122,7 @@ class GoogleDriveDataSource @Inject constructor(
             drive.files().get(fileId).executeMediaAndDownloadTo(outputStream)
             outputStream.toString(Charsets.UTF_8.name())
         } catch (e: Exception) {
-            Timber.e(e, "Drive download failed for fileId $fileId")
+            Log.e(TAG, "downloadEntry failed for $fileId: ${e.message}", e)
             null
         }
     }
@@ -100,13 +133,19 @@ class GoogleDriveDataSource @Inject constructor(
             drive.files().delete(fileId).execute()
             true
         } catch (e: Exception) {
-            Timber.e(e, "Drive delete failed for fileId $fileId")
+            Log.e(TAG, "deleteEntry failed for $fileId: ${e.message}", e)
             false
         }
     }
 
     fun isAuthenticated(): Boolean =
         GoogleSignIn.getLastSignedInAccount(context) != null
+
+    fun hasDriveScope(): Boolean {
+        val account = GoogleSignIn.getLastSignedInAccount(context) ?: return false
+        val driveScope = com.google.android.gms.common.api.Scope(DriveScopes.DRIVE_APPDATA)
+        return GoogleSignIn.hasPermissions(account, driveScope)
+    }
 }
 
 data class DriveFile(
