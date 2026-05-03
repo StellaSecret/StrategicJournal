@@ -1,4 +1,4 @@
-package com.strategicjournal
+package com.stellasecret.strategicjournal
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp

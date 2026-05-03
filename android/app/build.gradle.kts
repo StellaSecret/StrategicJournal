@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.strategicjournal"
+    namespace = "com.stellasecret.strategicjournal"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.strategicjournal"
+        applicationId = "com.stellasecret.strategicjournal"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

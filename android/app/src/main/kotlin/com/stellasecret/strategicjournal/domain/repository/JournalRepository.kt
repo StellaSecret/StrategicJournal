@@ -1,6 +1,6 @@
-package com.strategicjournal.domain.repository
+package com.stellasecret.strategicjournal.domain.repository
 
-import com.strategicjournal.domain.model.JournalEntry
+import com.stellasecret.strategicjournal.domain.model.JournalEntry
 import kotlinx.coroutines.flow.Flow
 
 interface JournalRepository {

@@ -1,10 +1,10 @@
-package com.strategicjournal.data
+package com.stellasecret.strategicjournal.data
 
 import android.content.Context
 import androidx.room.Room
-import com.strategicjournal.data.local.JournalEntryDao
-import com.strategicjournal.data.local.StrategicJournalDatabase
-import com.strategicjournal.domain.repository.JournalRepository
+import com.stellasecret.strategicjournal.data.local.JournalEntryDao
+import com.stellasecret.strategicjournal.data.local.StrategicJournalDatabase
+import com.stellasecret.strategicjournal.domain.repository.JournalRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides

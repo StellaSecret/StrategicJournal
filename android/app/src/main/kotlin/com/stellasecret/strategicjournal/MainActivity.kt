@@ -1,4 +1,4 @@
-package com.strategicjournal
+package com.stellasecret.strategicjournal
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -11,10 +11,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.strategicjournal.presentation.screens.entry.EntryScreen
-import com.strategicjournal.presentation.screens.home.HomeScreen
-import com.strategicjournal.presentation.screens.review.ReviewScreen
-import com.strategicjournal.presentation.theme.StrategicJournalTheme
+import com.stellasecret.strategicjournal.presentation.screens.entry.EntryScreen
+import com.stellasecret.strategicjournal.presentation.screens.home.HomeScreen
+import com.stellasecret.strategicjournal.presentation.screens.review.ReviewScreen
+import com.stellasecret.strategicjournal.presentation.theme.StrategicJournalTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

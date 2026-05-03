@@ -1,4 +1,4 @@
-package com.strategicjournal.presentation.screens.review
+package com.stellasecret.strategicjournal.presentation.screens.review
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
@@ -14,10 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.strategicjournal.domain.model.Decision
-import com.strategicjournal.domain.model.JournalEntry
-import com.strategicjournal.domain.model.Prediction
-import com.strategicjournal.presentation.theme.JournalColors
+import com.stellasecret.strategicjournal.domain.model.Decision
+import com.stellasecret.strategicjournal.domain.model.JournalEntry
+import com.stellasecret.strategicjournal.domain.model.Prediction
+import com.stellasecret.strategicjournal.presentation.theme.JournalColors
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -1,4 +1,4 @@
-package com.strategicjournal.domain.model
+package com.stellasecret.strategicjournal.domain.model
 
 import kotlinx.serialization.Serializable
 

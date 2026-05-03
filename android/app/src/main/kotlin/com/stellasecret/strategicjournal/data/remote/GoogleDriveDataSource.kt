@@ -1,4 +1,4 @@
-package com.strategicjournal.data.remote
+package com.stellasecret.strategicjournal.data.remote
 
 import android.content.Context
 import com.google.android.gms.auth.api.signin.GoogleSignIn

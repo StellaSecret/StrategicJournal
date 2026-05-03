@@ -1,11 +1,11 @@
-package com.strategicjournal.presentation.screens.review
+package com.stellasecret.strategicjournal.presentation.screens.review
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.strategicjournal.domain.model.Decision
-import com.strategicjournal.domain.model.JournalEntry
-import com.strategicjournal.domain.model.Prediction
-import com.strategicjournal.domain.repository.JournalRepository
+import com.stellasecret.strategicjournal.domain.model.Decision
+import com.stellasecret.strategicjournal.domain.model.JournalEntry
+import com.stellasecret.strategicjournal.domain.model.Prediction
+import com.stellasecret.strategicjournal.domain.repository.JournalRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch

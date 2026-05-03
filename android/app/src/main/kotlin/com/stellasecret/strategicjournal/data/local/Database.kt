@@ -1,4 +1,4 @@
-package com.strategicjournal.data.local
+package com.stellasecret.strategicjournal.data.local
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow

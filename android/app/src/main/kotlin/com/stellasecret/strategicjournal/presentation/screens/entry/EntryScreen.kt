@@ -1,4 +1,4 @@
-package com.strategicjournal.presentation.screens.entry
+package com.stellasecret.strategicjournal.presentation.screens.entry
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,8 +18,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.strategicjournal.domain.model.*
-import com.strategicjournal.presentation.theme.JournalColors
+import com.stellasecret.strategicjournal.domain.model.*
+import com.stellasecret.strategicjournal.presentation.theme.JournalColors
 import java.time.LocalDate
 import java.util.UUID
 

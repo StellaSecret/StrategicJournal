@@ -1,4 +1,4 @@
-package com.strategicjournal.presentation.screens.home
+package com.stellasecret.strategicjournal.presentation.screens.home
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
@@ -18,9 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.strategicjournal.domain.model.JournalEntry
-import com.strategicjournal.domain.repository.SyncState
-import com.strategicjournal.presentation.theme.JournalColors
+import com.stellasecret.strategicjournal.domain.model.JournalEntry
+import com.stellasecret.strategicjournal.domain.repository.SyncState
+import com.stellasecret.strategicjournal.presentation.theme.JournalColors
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 

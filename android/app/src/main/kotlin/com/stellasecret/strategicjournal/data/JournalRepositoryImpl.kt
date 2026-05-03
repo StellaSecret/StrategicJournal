@@ -1,12 +1,12 @@
-package com.strategicjournal.data
+package com.stellasecret.strategicjournal.data
 
-import com.strategicjournal.data.local.JournalEntryDao
-import com.strategicjournal.data.local.JournalEntryEntity
-import com.strategicjournal.data.remote.GoogleDriveDataSource
-import com.strategicjournal.domain.model.JournalEntry
-import com.strategicjournal.domain.repository.JournalRepository
-import com.strategicjournal.domain.repository.SyncResult
-import com.strategicjournal.domain.repository.SyncState
+import com.stellasecret.strategicjournal.data.local.JournalEntryDao
+import com.stellasecret.strategicjournal.data.local.JournalEntryEntity
+import com.stellasecret.strategicjournal.data.remote.GoogleDriveDataSource
+import com.stellasecret.strategicjournal.domain.model.JournalEntry
+import com.stellasecret.strategicjournal.domain.repository.JournalRepository
+import com.stellasecret.strategicjournal.domain.repository.SyncResult
+import com.stellasecret.strategicjournal.domain.repository.SyncState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map

@@ -1,4 +1,4 @@
-package com.strategicjournal.presentation.theme
+package com.stellasecret.strategicjournal.presentation.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
