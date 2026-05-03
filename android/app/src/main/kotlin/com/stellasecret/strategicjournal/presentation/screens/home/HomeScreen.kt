@@ -1,6 +1,5 @@
 package com.stellasecret.strategicjournal.presentation.screens.home
 
-import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -29,40 +28,13 @@ import java.time.format.DateTimeFormatter
 fun HomeScreen(
     onNavigateToEntry: (entryId: String?) -> Unit,
     onNavigateToReview: () -> Unit,
+    onGoogleSignIn: () -> Unit = {},
+    onGoogleSignOut: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val entries by viewModel.entries.collectAsState()
     val pendingReviews by viewModel.pendingReviews.collectAsState()
     val syncState by viewModel.syncState.collectAsState()
-
-    // Handle Drive auth events
-    val context = androidx.compose.ui.platform.LocalContext.current
-    LaunchedEffect(Unit) {
-        viewModel.uiEvent.collect { event ->
-            when (event) {
-                is HomeUiEvent.RequestGoogleSignIn -> {
-                    val signInIntent = com.google.android.gms.auth.api.signin.GoogleSignIn
-                        .getClient(
-                            context,
-                            com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
-                                com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
-                            )
-                            .requestEmail()
-                            .requestScopes(com.google.android.gms.common.api.Scope(com.google.api.services.drive.DriveScopes.DRIVE_APPDATA))
-                            .build()
-                        )
-                        .signInIntent
-                    (context as? androidx.activity.ComponentActivity)?.startActivity(signInIntent)
-                }
-                is HomeUiEvent.SignOutGoogle -> {
-                    com.google.android.gms.auth.api.signin.GoogleSignIn
-                        .getClient(context, com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
-                        .signOut()
-                }
-                else -> {}
-            }
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -84,8 +56,8 @@ fun HomeScreen(
                 actions = {
                     DriveAuthButton(
                         isAuthenticated = viewModel.isDriveAuthenticated.collectAsState().value,
-                        onSignIn = viewModel::signInWithGoogle,
-                        onSignOut = viewModel::signOutGoogle
+                        onSignIn = onGoogleSignIn,
+                        onSignOut = onGoogleSignOut
                     )
                     SyncIndicator(syncState = syncState, onSync = viewModel::syncNow)
                 },
@@ -137,13 +109,50 @@ fun HomeScreen(
     }
 }
 
+// ──────────────────────────────────────────────
+// Drive auth button
+// ──────────────────────────────────────────────
+
+@Composable
+private fun DriveAuthButton(
+    isAuthenticated: Boolean,
+    onSignIn: () -> Unit,
+    onSignOut: () -> Unit
+) {
+    if (isAuthenticated) {
+        IconButton(onClick = onSignOut) {
+            Icon(
+                Icons.Default.CloudDone,
+                contentDescription = "Connected to Drive — tap to disconnect",
+                tint = JournalColors.Correct,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    } else {
+        IconButton(onClick = onSignIn) {
+            Icon(
+                Icons.Default.CloudOff,
+                contentDescription = "Connect Google Drive",
+                tint = JournalColors.Slate,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+// ──────────────────────────────────────────────
+// Pending review banner
+// ──────────────────────────────────────────────
+
 @Composable
 private fun PendingReviewBanner(count: Int, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = JournalColors.Signal.copy(alpha = 0.15f)),
+        colors = CardDefaults.cardColors(
+            containerColor = JournalColors.Signal.copy(alpha = 0.15f)
+        ),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
@@ -173,13 +182,19 @@ private fun PendingReviewBanner(count: Int, onClick: () -> Unit) {
     }
 }
 
+// ──────────────────────────────────────────────
+// Entry card
+// ──────────────────────────────────────────────
+
 @Composable
 private fun EntryCard(entry: JournalEntry, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -205,28 +220,15 @@ private fun EntryCard(entry: JournalEntry, onClick: () -> Unit) {
 
             Spacer(Modifier.height(8.dp))
 
-            // Summary chips
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (entry.hypotheses.isNotEmpty()) {
-                    StatChip(
-                        count = entry.hypotheses.size,
-                        label = "H",
-                        color = JournalColors.Sage
-                    )
+                    StatChip(count = entry.hypotheses.size, label = "H", color = JournalColors.Sage)
                 }
                 if (entry.decisions.isNotEmpty()) {
-                    StatChip(
-                        count = entry.decisions.size,
-                        label = "D",
-                        color = JournalColors.Gold
-                    )
+                    StatChip(count = entry.decisions.size, label = "D", color = JournalColors.Gold)
                 }
                 if (entry.predictions.isNotEmpty()) {
-                    StatChip(
-                        count = entry.predictions.size,
-                        label = "P",
-                        color = JournalColors.Signal
-                    )
+                    StatChip(count = entry.predictions.size, label = "P", color = JournalColors.Signal)
                 }
             }
 
@@ -244,7 +246,11 @@ private fun EntryCard(entry: JournalEntry, onClick: () -> Unit) {
 }
 
 @Composable
-private fun StatChip(count: Int, label: String, color: androidx.compose.ui.graphics.Color) {
+private fun StatChip(
+    count: Int,
+    label: String,
+    color: androidx.compose.ui.graphics.Color
+) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(4.dp))
@@ -260,32 +266,9 @@ private fun StatChip(count: Int, label: String, color: androidx.compose.ui.graph
     }
 }
 
-@Composable
-private fun DriveAuthButton(
-    isAuthenticated: Boolean,
-    onSignIn: () -> Unit,
-    onSignOut: () -> Unit
-) {
-    if (isAuthenticated) {
-        IconButton(onClick = onSignOut) {
-            Icon(
-                Icons.Default.CloudDone,
-                contentDescription = "Connected to Drive — tap to disconnect",
-                tint = JournalColors.Correct,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-    } else {
-        IconButton(onClick = onSignIn) {
-            Icon(
-                Icons.Default.CloudOff,
-                contentDescription = "Connect Google Drive",
-                tint = JournalColors.Slate,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-    }
-}
+// ──────────────────────────────────────────────
+// Sync indicator
+// ──────────────────────────────────────────────
 
 @Composable
 private fun SyncIndicator(syncState: SyncState, onSync: () -> Unit) {
@@ -305,6 +288,10 @@ private fun SyncIndicator(syncState: SyncState, onSync: () -> Unit) {
         }
     }
 }
+
+// ──────────────────────────────────────────────
+// Empty state
+// ──────────────────────────────────────────────
 
 @Composable
 private fun EmptyState() {

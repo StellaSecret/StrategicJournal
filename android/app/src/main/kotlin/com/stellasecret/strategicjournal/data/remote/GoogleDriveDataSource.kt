@@ -23,7 +23,21 @@ class GoogleDriveDataSource @Inject constructor(
 ) {
 
     private fun buildDriveService(): Drive? {
-        val account = GoogleSignIn.getLastSignedInAccount(context) ?: return null
+        val account = GoogleSignIn.getLastSignedInAccount(context) ?: run {
+            Timber.e("Drive: no signed-in account found")
+            return null
+        }
+
+        // Verify the Drive scope was actually granted
+        val driveScope = com.google.android.gms.common.api.Scope(DriveScopes.DRIVE_APPDATA)
+        val hasScope = GoogleSignIn.hasPermissions(account, driveScope)
+        Timber.d("Drive: account=${account.email}, hasDriveScope=$hasScope, scopes=${account.grantedScopes}")
+
+        if (!hasScope) {
+            Timber.e("Drive: DRIVE_APPDATA scope not granted — user needs to re-authenticate")
+            return null
+        }
+
         val credential = GoogleAccountCredential.usingOAuth2(
             context, listOf(DriveScopes.DRIVE_APPDATA)
         ).apply { selectedAccount = account.account }
@@ -33,6 +47,12 @@ class GoogleDriveDataSource @Inject constructor(
             GsonFactory.getDefaultInstance(),
             credential
         ).setApplicationName("StrategicJournal").build()
+    }
+
+    fun hasDriveScope(): Boolean {
+        val account = GoogleSignIn.getLastSignedInAccount(context) ?: return false
+        val driveScope = com.google.android.gms.common.api.Scope(DriveScopes.DRIVE_APPDATA)
+        return GoogleSignIn.hasPermissions(account, driveScope)
     }
 
     suspend fun uploadEntry(
@@ -69,15 +89,21 @@ class GoogleDriveDataSource @Inject constructor(
 
     suspend fun listEntryFiles(): List<DriveFile> = withContext(Dispatchers.IO) {
         try {
-            val drive = buildDriveService() ?: return@withContext emptyList()
+            val account = GoogleSignIn.getLastSignedInAccount(context)
+            Timber.d("Drive listEntryFiles: account=${account?.email}, authenticated=${account != null}")
+            val drive = buildDriveService() ?: run {
+                Timber.e("Drive listEntryFiles: buildDriveService returned null")
+                return@withContext emptyList()
+            }
             val result = drive.files().list()
                 .setSpaces("appDataFolder")
                 .setFields("files(id, name, modifiedTime)")
                 .setQ("name contains 'entry_'")
                 .execute()
+            Timber.d("Drive listEntryFiles: found ${result.files.size} files")
             result.files.map { DriveFile(it.id, it.name, it.modifiedTime?.toStringRfc3339()) }
         } catch (e: Exception) {
-            Timber.e(e, "Drive list failed")
+            Timber.e(e, "Drive list failed: ${e.message}")
             emptyList()
         }
     }
