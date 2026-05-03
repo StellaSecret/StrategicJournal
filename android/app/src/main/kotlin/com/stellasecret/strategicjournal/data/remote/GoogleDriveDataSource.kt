@@ -12,6 +12,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import android.util.Log
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
@@ -23,7 +24,21 @@ class GoogleDriveDataSource @Inject constructor(
 ) {
 
     private fun buildDriveService(): Drive? {
-        val account = GoogleSignIn.getLastSignedInAccount(context) ?: return null
+        val account = GoogleSignIn.getLastSignedInAccount(context) ?: run {
+            Log.e("SJ_DRIVE", "buildDriveService: no signed-in account")
+            return null
+        }
+
+        // Verify the Drive scope was actually granted
+        val driveScope = com.google.android.gms.common.api.Scope(DriveScopes.DRIVE_APPDATA)
+        val hasScope = GoogleSignIn.hasPermissions(account, driveScope)
+        Log.d("SJ_DRIVE", "buildDriveService: email="+account.email+", hasDriveScope="+hasScope)
+
+        if (!hasScope) {
+            Log.e("SJ_DRIVE", "buildDriveService: DRIVE_APPDATA scope NOT granted")
+            return null
+        }
+
         val credential = GoogleAccountCredential.usingOAuth2(
             context, listOf(DriveScopes.DRIVE_APPDATA)
         ).apply { selectedAccount = account.account }
@@ -33,6 +48,12 @@ class GoogleDriveDataSource @Inject constructor(
             GsonFactory.getDefaultInstance(),
             credential
         ).setApplicationName("StrategicJournal").build()
+    }
+
+    fun hasDriveScope(): Boolean {
+        val account = GoogleSignIn.getLastSignedInAccount(context) ?: return false
+        val driveScope = com.google.android.gms.common.api.Scope(DriveScopes.DRIVE_APPDATA)
+        return GoogleSignIn.hasPermissions(account, driveScope)
     }
 
     suspend fun uploadEntry(
@@ -69,15 +90,21 @@ class GoogleDriveDataSource @Inject constructor(
 
     suspend fun listEntryFiles(): List<DriveFile> = withContext(Dispatchers.IO) {
         try {
-            val drive = buildDriveService() ?: return@withContext emptyList()
+            val account = GoogleSignIn.getLastSignedInAccount(context)
+            Log.d("SJ_DRIVE", "listEntryFiles: account="+account?.email+", auth="+(account != null))
+            val drive = buildDriveService() ?: run {
+                Log.e("SJ_DRIVE", "listEntryFiles: buildDriveService returned null")
+                return@withContext emptyList()
+            }
             val result = drive.files().list()
                 .setSpaces("appDataFolder")
                 .setFields("files(id, name, modifiedTime)")
                 .setQ("name contains 'entry_'")
                 .execute()
+            Log.d("SJ_DRIVE", "listEntryFiles: found "+result.files.size+" files")
             result.files.map { DriveFile(it.id, it.name, it.modifiedTime?.toStringRfc3339()) }
         } catch (e: Exception) {
-            Timber.e(e, "Drive list failed")
+            Log.e("SJ_DRIVE", "Drive list failed: "+e.message, e)
             emptyList()
         }
     }
