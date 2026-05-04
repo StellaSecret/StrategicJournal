@@ -1,0 +1,187 @@
+name: Strategic Journal — Global CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  security-events: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # 1. ANALYSE DE SÉCURITÉ (CodeQL & Audit)
+  # ─────────────────────────────────────────────────────────────
+  security_scan:
+    name: Security Analysis (SAST)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript, java-kotlin
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle Wrapper
+        working-directory: android
+        run: |
+          wget -q "https://services.gradle.org/distributions/gradle-8.9-bin.zip" -O /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt/
+          echo "/opt/gradle-8.9/bin" >> $GITHUB_PATH
+          /opt/gradle-8.9/bin/gradle wrapper --gradle-version "8.9"
+          chmod +x gradlew
+
+      - name: Manual Build for CodeQL (Android)
+        working-directory: android
+        run: |
+          ./gradlew assembleDevDebug -x test --no-daemon
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # ─────────────────────────────────────────────────────────────
+  # 2. PIPELINE WEB (Build & Deploy)
+  # ─────────────────────────────────────────────────────────────
+  web_pipeline:
+    name: Web Pipeline
+    needs: security_scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'web')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install & Audit SCA
+        working-directory: web
+        run: |
+          npm ci
+          npm audit --audit-level=high
+
+      - name: Lint & Test
+        working-directory: web
+        run: |
+          npm run type-check
+          npm run lint
+          npm run test -- --run
+
+      - name: Build Web
+        working-directory: web
+        run: npm run build
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID_WEB }}
+          VITE_APP_VERSION: ${{ github.sha }}
+
+      - name: Upload Pages Artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy_web:
+    name: Deploy to GitHub Pages
+    needs: web_pipeline
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - name: Deploy
+        uses: actions/deploy-pages@v4
+
+  # ─────────────────────────────────────────────────────────────
+  # 3. PIPELINE ANDROID (Test, Build & Release)
+  # ─────────────────────────────────────────────────────────────
+  android_pipeline:
+    name: Android Pipeline
+    needs: security_scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Prepare Gradle Wrapper
+        working-directory: android
+        run: |
+          wget -q "https://services.gradle.org/distributions/gradle-8.9-bin.zip" -O /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt/
+          echo "/opt/gradle-8.9/bin" >> $GITHUB_PATH
+          gradle wrapper --gradle-version "8.9"
+          chmod +x gradlew
+
+      - name: Lint & Unit Tests
+        working-directory: android
+        run: |
+          ./gradlew lint
+          ./gradlew testDevDebugUnitTest
+
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > $GITHUB_WORKSPACE/strategic-journal-release.jks
+
+      - name: Set Version Code
+        run: |
+          sed -i "s/versionCode = .*/versionCode = ${{ github.run_number }}/" android/app/build.gradle.kts
+
+      - name: Build AAB & APK Release
+        working-directory: android
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID_ANDROID }}
+          KEYSTORE_PATH: ${{ github.workspace }}/strategic-journal-release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          ./gradlew bundleProdRelease assembleProdRelease --no-daemon
+
+      - name: Create GitHub Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: "Strategic Journal build #${{ github.run_number }}"
+          body: |
+            Build automatique de la branche main.
+            📦 **AAB** pour Play Store
+            📱 **APK** pour installation manuelle
+          files: |
+            android/app/build/outputs/bundle/prodRelease/*.aab
+            android/app/build/outputs/apk/prod/release/*.apk
+            android/app/build/outputs/mapping/prodRelease/mapping.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Clean up
+        if: always()
+        run: rm -f ${{ github.workspace }}/strategic-journal-release.jks
