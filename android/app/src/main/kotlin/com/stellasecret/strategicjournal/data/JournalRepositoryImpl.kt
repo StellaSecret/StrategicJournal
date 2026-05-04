@@ -14,6 +14,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.time.LocalDateTime
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -29,10 +30,13 @@ class JournalRepositoryImpl @Inject constructor(
     override fun observeEntries(): Flow<List<JournalEntry>> =
         dao.observeAll().map { entities -> entities.map { it.toDomain(json) } }
 
-    override fun observePendingReviews(): Flow<List<JournalEntry>> =
+   override fun observePendingReviews(): Flow<List<JournalEntry>> =
         dao.observeWithPendingReviews().map { entities ->
+            val today = LocalDate.now().toString()
             entities.map { it.toDomain(json) }.filter { entry ->
-                entry.predictions.any { it.wasCorrect == null }
+                entry.predictions.any { p ->
+                    p.wasCorrect == null && p.deadline <= today
+                }
             }
         }
 
