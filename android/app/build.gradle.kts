@@ -60,10 +60,18 @@ android {
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
             buildConfigField("String", "DRIVE_FOLDER_NAME", "\"StrategicJournal-Dev\"")
+            buildConfigField(
+                "String", "GEMINI_API_KEY",
+                "\"${project.findProperty("GEMINI_API_KEY") ?: System.getenv("GEMINI_API_KEY") ?: ""}\""
+            )
         }
         create("prod") {
             dimension = "environment"
             buildConfigField("String", "DRIVE_FOLDER_NAME", "\"StrategicJournal\"")
+            buildConfigField(
+                "String", "GEMINI_API_KEY",
+                "\"${project.findProperty("GEMINI_API_KEY") ?: System.getenv("GEMINI_API_KEY") ?: ""}\""
+            )
         }
     }
 

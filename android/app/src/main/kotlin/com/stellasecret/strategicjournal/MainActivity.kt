@@ -21,6 +21,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
 import com.google.api.services.drive.DriveScopes
+import com.stellasecret.strategicjournal.presentation.screens.aireview.AiReviewScreen
 import com.stellasecret.strategicjournal.presentation.screens.entry.EntryScreen
 import com.stellasecret.strategicjournal.presentation.screens.home.HomeScreen
 import com.stellasecret.strategicjournal.presentation.screens.review.ReviewScreen
@@ -140,6 +141,7 @@ object Routes {
     const val HOME = "home"
     const val ENTRY = "entry?entryId={entryId}"
     const val REVIEW = "review"
+    const val AI_REVIEW = "ai_review"
     fun entry(entryId: String? = null) =
         if (entryId != null) "entry?entryId=$entryId" else "entry"
 }
@@ -151,6 +153,7 @@ fun AppNavHost(navController: NavHostController, activity: MainActivity) {
             HomeScreen(
                 onNavigateToEntry = { id -> navController.navigate(Routes.entry(id)) },
                 onNavigateToReview = { navController.navigate(Routes.REVIEW) },
+                onNavigateToAiReview = { navController.navigate(Routes.AI_REVIEW) },
                 onGoogleSignIn = { activity.launchGoogleSignIn() },
                 onGoogleSignOut = { activity.launchGoogleSignOut() }
             )
@@ -169,6 +172,9 @@ fun AppNavHost(navController: NavHostController, activity: MainActivity) {
         }
         composable(Routes.REVIEW) {
             ReviewScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.AI_REVIEW) {
+            AiReviewScreen(onBack = { navController.popBackStack() })
         }
     }
 }

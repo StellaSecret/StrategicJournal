@@ -28,6 +28,7 @@ import java.time.format.DateTimeFormatter
 fun HomeScreen(
     onNavigateToEntry: (entryId: String?) -> Unit,
     onNavigateToReview: () -> Unit,
+    onNavigateToAiReview: () -> Unit = {},
     onGoogleSignIn: () -> Unit = {},
     onGoogleSignOut: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
@@ -54,6 +55,14 @@ fun HomeScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onNavigateToAiReview) {
+                        Icon(
+                            Icons.Default.AutoAwesome,
+                            contentDescription = "AI Review",
+                            tint = JournalColors.Gold,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                     DriveAuthButton(
                         isAuthenticated = viewModel.isDriveAuthenticated.collectAsState().value,
                         onSignIn = onGoogleSignIn,

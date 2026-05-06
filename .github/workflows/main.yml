@@ -48,10 +48,11 @@ jobs:
           /opt/gradle-8.9/bin/gradle wrapper --gradle-version "8.9"
           chmod +x gradlew
 
-      - name: Manual Build for CodeQL (Android)
+      - name: Build for CodeQL (Android)
         working-directory: android
-        run: |
-          ./gradlew assembleDevDebug -x test --no-daemon
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: ./gradlew assembleDevDebug -x test --no-daemon
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
@@ -142,6 +143,8 @@ jobs:
 
       - name: Lint & Unit Tests
         working-directory: android
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           ./gradlew lint
           ./gradlew testDevDebugUnitTest
@@ -158,12 +161,12 @@ jobs:
         working-directory: android
         env:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID_ANDROID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           KEYSTORE_PATH: ${{ github.workspace }}/strategic-journal-release.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: |
-          ./gradlew bundleProdRelease assembleProdRelease --no-daemon
+        run: ./gradlew bundleProdRelease assembleProdRelease --no-daemon
 
       - name: Create GitHub Release
         if: github.ref == 'refs/heads/main'
