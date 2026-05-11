@@ -21,13 +21,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.stellasecret.strategicjournal.domain.model.*
 import com.stellasecret.strategicjournal.presentation.theme.JournalColors
 import java.time.LocalDate
-import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EntryScreen(
     onBack: () -> Unit,
-    viewModel: EntryViewModel = hiltViewModel()
+    viewModel: EntryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -49,7 +48,7 @@ fun EntryScreen(
                     Text(
                         entry?.date ?: LocalDate.now().toString(),
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
                     )
                 },
                 navigationIcon = {
@@ -62,7 +61,7 @@ fun EntryScreen(
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp).padding(end = 16.dp),
                             strokeWidth = 2.dp,
-                            color = JournalColors.Gold
+                            color = JournalColors.Gold,
                         )
                     } else {
                         TextButton(onClick = { viewModel.saveEntry() }) {
@@ -70,12 +69,13 @@ fun EntryScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                    ),
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         if (entry == null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -85,11 +85,12 @@ fun EntryScreen(
         }
 
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             // Context note
             item {
@@ -97,7 +98,7 @@ fun EntryScreen(
                     note = entry.contextNote,
                     energyLevel = entry.energyLevel,
                     onNoteChange = viewModel::updateContextNote,
-                    onEnergyChange = viewModel::updateEnergyLevel
+                    onEnergyChange = viewModel::updateEnergyLevel,
                 )
             }
 
@@ -107,7 +108,7 @@ fun EntryScreen(
                     label = "H",
                     title = "Hypotheses",
                     color = JournalColors.Sage,
-                    count = entry.hypotheses.size
+                    count = entry.hypotheses.size,
                 )
             }
             items(entry.hypotheses) { h ->
@@ -123,7 +124,7 @@ fun EntryScreen(
                     label = "D",
                     title = "Decisions",
                     color = JournalColors.Gold,
-                    count = entry.decisions.size
+                    count = entry.decisions.size,
                 )
             }
             items(entry.decisions) { d ->
@@ -137,7 +138,7 @@ fun EntryScreen(
                     label = "P",
                     title = "Predictions",
                     color = JournalColors.Signal,
-                    count = entry.predictions.size
+                    count = entry.predictions.size,
                 )
             }
             items(entry.predictions) { p ->
@@ -159,11 +160,11 @@ private fun ContextSection(
     note: String,
     energyLevel: Int,
     onNoteChange: (String) -> Unit,
-    onEnergyChange: (Int) -> Unit
+    onEnergyChange: (Int) -> Unit,
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Context", style = MaterialTheme.typography.labelSmall, color = JournalColors.Slate)
@@ -174,12 +175,13 @@ private fun ContextSection(
                 placeholder = { Text("What's on your mind today?", color = JournalColors.Slate) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = JournalColors.Gold,
-                    unfocusedBorderColor = JournalColors.InkMuted,
-                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                )
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = JournalColors.Gold,
+                        unfocusedBorderColor = JournalColors.InkMuted,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    ),
             )
             Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -190,9 +192,18 @@ private fun ContextSection(
                     valueRange = 1f..10f,
                     steps = 8,
                     modifier = Modifier.weight(1f),
-                    colors = SliderDefaults.colors(thumbColor = JournalColors.Gold, activeTrackColor = JournalColors.Gold)
+                    colors =
+                        SliderDefaults.colors(
+                            thumbColor = JournalColors.Gold,
+                            activeTrackColor = JournalColors.Gold,
+                        ),
                 )
-                Text("$energyLevel", style = MaterialTheme.typography.labelSmall, color = JournalColors.Gold, fontWeight = FontWeight.Bold)
+                Text(
+                    "$energyLevel",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = JournalColors.Gold,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         }
     }
@@ -203,7 +214,12 @@ private fun ContextSection(
 // ──────────────────────────────────────────────
 
 @Composable
-private fun SectionHeader(label: String, title: String, color: androidx.compose.ui.graphics.Color, count: Int) {
+private fun SectionHeader(
+    label: String,
+    title: String,
+    color: androidx.compose.ui.graphics.Color,
+    count: Int,
+) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.Bold)
         Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
@@ -218,15 +234,18 @@ private fun SectionHeader(label: String, title: String, color: androidx.compose.
 // ──────────────────────────────────────────────
 
 @Composable
-private fun HypothesisChip(h: Hypothesis, onRemove: () -> Unit) {
+private fun HypothesisChip(
+    h: Hypothesis,
+    onRemove: () -> Unit,
+) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(8.dp),
     ) {
         Row(
             modifier = Modifier.padding(12.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.Top,
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -237,22 +256,30 @@ private fun HypothesisChip(h: Hypothesis, onRemove: () -> Unit) {
                 Text(h.statement, style = MaterialTheme.typography.bodyMedium)
             }
             IconButton(onClick = onRemove, modifier = Modifier.size(20.dp)) {
-                Icon(Icons.Default.Close, contentDescription = "Remove", tint = JournalColors.Slate, modifier = Modifier.size(14.dp))
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = "Remove",
+                    tint = JournalColors.Slate,
+                    modifier = Modifier.size(14.dp),
+                )
             }
         }
     }
 }
 
 @Composable
-private fun DecisionChip(d: Decision, onRemove: () -> Unit) {
+private fun DecisionChip(
+    d: Decision,
+    onRemove: () -> Unit,
+) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(8.dp),
     ) {
         Row(
             modifier = Modifier.padding(12.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.Top,
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -264,22 +291,30 @@ private fun DecisionChip(d: Decision, onRemove: () -> Unit) {
                 Text(d.rationale, style = MaterialTheme.typography.bodySmall, color = JournalColors.Slate)
             }
             IconButton(onClick = onRemove, modifier = Modifier.size(20.dp)) {
-                Icon(Icons.Default.Close, contentDescription = "Remove", tint = JournalColors.Slate, modifier = Modifier.size(14.dp))
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = "Remove",
+                    tint = JournalColors.Slate,
+                    modifier = Modifier.size(14.dp),
+                )
             }
         }
     }
 }
 
 @Composable
-private fun PredictionChip(p: Prediction, onRemove: () -> Unit) {
+private fun PredictionChip(
+    p: Prediction,
+    onRemove: () -> Unit,
+) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(8.dp),
     ) {
         Row(
             modifier = Modifier.padding(12.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.Top,
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -291,7 +326,12 @@ private fun PredictionChip(p: Prediction, onRemove: () -> Unit) {
                 Text(p.expectedOutcome, style = MaterialTheme.typography.bodySmall, color = JournalColors.Slate)
             }
             IconButton(onClick = onRemove, modifier = Modifier.size(20.dp)) {
-                Icon(Icons.Default.Close, contentDescription = "Remove", tint = JournalColors.Slate, modifier = Modifier.size(14.dp))
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = "Remove",
+                    tint = JournalColors.Slate,
+                    modifier = Modifier.size(14.dp),
+                )
             }
         }
     }
@@ -314,14 +354,14 @@ private fun AddHypothesisCard(onAdd: (String, HypothesisDomain, Int) -> Unit) {
             onValueChange = { statement = it },
             placeholder = { Text("I believe that…", color = JournalColors.Slate) },
             modifier = Modifier.fillMaxWidth(),
-            colors = journalTextFieldColors()
+            colors = journalTextFieldColors(),
         )
         Spacer(Modifier.height(8.dp))
         EnumDropdown(
             options = HypothesisDomain.entries,
             selected = domain,
             label = { it.name },
-            onSelect = { domain = it }
+            onSelect = { domain = it },
         )
         Spacer(Modifier.height(8.dp))
         ConfidenceSlider(value = confidence, onChange = { confidence = it })
@@ -330,10 +370,11 @@ private fun AddHypothesisCard(onAdd: (String, HypothesisDomain, Int) -> Unit) {
             onClick = {
                 if (statement.isNotBlank()) {
                     onAdd(statement, domain, confidence.toInt())
-                    statement = ""; expanded = false
+                    statement = ""
+                    expanded = false
                 }
             },
-            colors = ButtonDefaults.buttonColors(containerColor = JournalColors.Sage)
+            colors = ButtonDefaults.buttonColors(containerColor = JournalColors.Sage),
         ) { Text("Add") }
     }
 }
@@ -352,7 +393,7 @@ private fun AddDecisionCard(onAdd: (String, String, DecisionType, Boolean) -> Un
             onValueChange = { statement = it },
             placeholder = { Text("I decided to…", color = JournalColors.Slate) },
             modifier = Modifier.fillMaxWidth(),
-            colors = journalTextFieldColors()
+            colors = journalTextFieldColors(),
         )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
@@ -360,21 +401,21 @@ private fun AddDecisionCard(onAdd: (String, String, DecisionType, Boolean) -> Un
             onValueChange = { rationale = it },
             placeholder = { Text("Because…", color = JournalColors.Slate) },
             modifier = Modifier.fillMaxWidth(),
-            colors = journalTextFieldColors()
+            colors = journalTextFieldColors(),
         )
         Spacer(Modifier.height(8.dp))
         EnumDropdown(
             options = DecisionType.entries,
             selected = type,
             label = { it.name },
-            onSelect = { type = it }
+            onSelect = { type = it },
         )
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(
                 checked = reversible,
                 onCheckedChange = { reversible = it },
-                colors = CheckboxDefaults.colors(checkedColor = JournalColors.Gold)
+                colors = CheckboxDefaults.colors(checkedColor = JournalColors.Gold),
             )
             Text("Reversible", style = MaterialTheme.typography.bodyMedium)
         }
@@ -383,10 +424,12 @@ private fun AddDecisionCard(onAdd: (String, String, DecisionType, Boolean) -> Un
             onClick = {
                 if (statement.isNotBlank()) {
                     onAdd(statement, rationale, type, reversible)
-                    statement = ""; rationale = ""; expanded = false
+                    statement = ""
+                    rationale = ""
+                    expanded = false
                 }
             },
-            colors = ButtonDefaults.buttonColors(containerColor = JournalColors.Gold)
+            colors = ButtonDefaults.buttonColors(containerColor = JournalColors.Gold),
         ) { Text("Add", color = JournalColors.Ink) }
     }
 }
@@ -405,7 +448,7 @@ private fun AddPredictionCard(onAdd: (String, String, String, Int) -> Unit) {
             onValueChange = { statement = it },
             placeholder = { Text("I predict that…", color = JournalColors.Slate) },
             modifier = Modifier.fillMaxWidth(),
-            colors = journalTextFieldColors()
+            colors = journalTextFieldColors(),
         )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
@@ -413,7 +456,7 @@ private fun AddPredictionCard(onAdd: (String, String, String, Int) -> Unit) {
             onValueChange = { expected = it },
             placeholder = { Text("The measurable outcome will be…", color = JournalColors.Slate) },
             modifier = Modifier.fillMaxWidth(),
-            colors = journalTextFieldColors()
+            colors = journalTextFieldColors(),
         )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
@@ -422,7 +465,7 @@ private fun AddPredictionCard(onAdd: (String, String, String, Int) -> Unit) {
             label = { Text("Deadline (YYYY-MM-DD)", color = JournalColors.Slate) },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            colors = journalTextFieldColors()
+            colors = journalTextFieldColors(),
         )
         Spacer(Modifier.height(8.dp))
         ConfidenceSlider(value = confidence, onChange = { confidence = it })
@@ -431,10 +474,12 @@ private fun AddPredictionCard(onAdd: (String, String, String, Int) -> Unit) {
             onClick = {
                 if (statement.isNotBlank()) {
                     onAdd(statement, expected, deadline, confidence.toInt())
-                    statement = ""; expected = ""; expanded = false
+                    statement = ""
+                    expected = ""
+                    expanded = false
                 }
             },
-            colors = ButtonDefaults.buttonColors(containerColor = JournalColors.Signal)
+            colors = ButtonDefaults.buttonColors(containerColor = JournalColors.Signal),
         ) { Text("Add") }
     }
 }
@@ -444,23 +489,28 @@ private fun AddPredictionCard(onAdd: (String, String, String, Int) -> Unit) {
 // ──────────────────────────────────────────────
 
 @Composable
-private fun AddCard(label: String, expanded: Boolean, onToggle: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+private fun AddCard(
+    label: String,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(8.dp),
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth().clickable(onClick = onToggle),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(label, style = MaterialTheme.typography.bodyMedium, color = JournalColors.Slate)
                 Icon(
                     if (expanded) Icons.Default.ExpandLess else Icons.Default.Add,
                     contentDescription = null,
                     tint = JournalColors.Slate,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp),
                 )
             }
             if (expanded) {
@@ -472,7 +522,10 @@ private fun AddCard(label: String, expanded: Boolean, onToggle: () -> Unit, cont
 }
 
 @Composable
-private fun ConfidenceSlider(value: Float, onChange: (Float) -> Unit) {
+private fun ConfidenceSlider(
+    value: Float,
+    onChange: (Float) -> Unit,
+) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Confidence", style = MaterialTheme.typography.labelSmall, color = JournalColors.Slate)
         Slider(
@@ -480,29 +533,45 @@ private fun ConfidenceSlider(value: Float, onChange: (Float) -> Unit) {
             onValueChange = onChange,
             valueRange = 0f..100f,
             modifier = Modifier.weight(1f),
-            colors = SliderDefaults.colors(thumbColor = JournalColors.Gold, activeTrackColor = JournalColors.Gold)
+            colors = SliderDefaults.colors(thumbColor = JournalColors.Gold, activeTrackColor = JournalColors.Gold),
         )
-        Text("${value.toInt()}%", style = MaterialTheme.typography.labelSmall, color = JournalColors.Gold, fontWeight = FontWeight.Bold)
+        Text(
+            "${value.toInt()}%",
+            style = MaterialTheme.typography.labelSmall,
+            color = JournalColors.Gold,
+            fontWeight = FontWeight.Bold,
+        )
     }
 }
 
 @Composable
-private fun <T : Enum<T>> EnumDropdown(options: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit) {
+private fun <T : Enum<T>> EnumDropdown(
+    options: List<T>,
+    selected: T,
+    label: (T) -> String,
+    onSelect: (T) -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         OutlinedButton(
             onClick = { expanded = true },
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = JournalColors.Slate)
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = JournalColors.Slate),
         ) {
             Text(label(selected))
             Icon(Icons.Default.ArrowDropDown, contentDescription = null)
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false },
-            containerColor = MaterialTheme.colorScheme.surface) {
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
             options.forEach { opt ->
                 DropdownMenuItem(
                     text = { Text(label(opt)) },
-                    onClick = { onSelect(opt); expanded = false }
+                    onClick = {
+                        onSelect(opt)
+                        expanded = false
+                    },
                 )
             }
         }
@@ -516,22 +585,27 @@ private fun DomainChip(domain: HypothesisDomain) = SmallChip(domain.name, Journa
 private fun ConfidenceChip(confidence: Int) = SmallChip("$confidence%", JournalColors.Gold)
 
 @Composable
-private fun SmallChip(text: String, color: androidx.compose.ui.graphics.Color) {
+private fun SmallChip(
+    text: String,
+    color: androidx.compose.ui.graphics.Color,
+) {
     Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(color.copy(alpha = 0.15f))
-            .padding(horizontal = 6.dp, vertical = 2.dp)
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(color.copy(alpha = 0.15f))
+                .padding(horizontal = 6.dp, vertical = 2.dp),
     ) {
         Text(text, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
     }
 }
 
 @Composable
-private fun journalTextFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor = JournalColors.Gold,
-    unfocusedBorderColor = JournalColors.InkMuted,
-    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-    cursorColor = JournalColors.Gold
-)
+private fun journalTextFieldColors() =
+    OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = JournalColors.Gold,
+        unfocusedBorderColor = JournalColors.InkMuted,
+        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+        cursorColor = JournalColors.Gold,
+    )
