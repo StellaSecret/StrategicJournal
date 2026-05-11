@@ -1,0 +1,14 @@
+# pyproject.toml
+# Only the commitizen section is needed — no Python project setup required.
+# If you already have a pyproject.toml, just add the [tool.commitizen] table.
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "1.0.0"
+tag_format = "v$version"
+
+# Allowed commit types (drives both validation and changelog generation)
+# The commit-msg hook enforces this pattern:
+#   <type>(<optional scope>): <description>
+[tool.commitizen.customize]
+schema_pattern = "^(feat|fix|chore|docs|refactor|test|ci|perf)(\\(\\S+\\))?(!)?: .{1,100}$"

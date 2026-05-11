@@ -17,36 +17,35 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
+    @Provides
+    @Singleton
+    fun provideDatabase(
+        @ApplicationContext context: Context,
+    ): StrategicJournalDatabase =
+        Room
+            .databaseBuilder(
+                context,
+                StrategicJournalDatabase::class.java,
+                StrategicJournalDatabase.DATABASE_NAME,
+            ).build()
+
+    @Provides
+    fun provideJournalEntryDao(db: StrategicJournalDatabase): JournalEntryDao = db.journalEntryDao()
 
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): StrategicJournalDatabase =
-        Room.databaseBuilder(
-            context,
-            StrategicJournalDatabase::class.java,
-            StrategicJournalDatabase.DATABASE_NAME
-        ).build()
-
-    @Provides
-    fun provideJournalEntryDao(db: StrategicJournalDatabase): JournalEntryDao =
-        db.journalEntryDao()
-
-    @Provides
-    @Singleton
-    fun provideJson(): Json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-        isLenient = true
-    }
+    fun provideJson(): Json =
+        Json {
+            ignoreUnknownKeys = true
+            encodeDefaults = true
+            isLenient = true
+        }
 }
 
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
-
     @Binds
     @Singleton
-    abstract fun bindJournalRepository(
-        impl: JournalRepositoryImpl
-    ): JournalRepository
+    abstract fun bindJournalRepository(impl: JournalRepositoryImpl): JournalRepository
 }

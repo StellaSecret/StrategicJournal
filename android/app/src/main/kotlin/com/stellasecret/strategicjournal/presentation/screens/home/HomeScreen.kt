@@ -31,7 +31,7 @@ fun HomeScreen(
     onNavigateToAiReview: () -> Unit = {},
     onGoogleSignIn: () -> Unit = {},
     onGoogleSignOut: () -> Unit = {},
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val entries by viewModel.entries.collectAsState()
     val pendingReviews by viewModel.pendingReviews.collectAsState()
@@ -45,12 +45,12 @@ fun HomeScreen(
                         Text(
                             "Strategic Journal",
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
                         Text(
                             LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, d MMMM")),
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 },
@@ -60,45 +60,47 @@ fun HomeScreen(
                             Icons.Default.AutoAwesome,
                             contentDescription = "AI Review",
                             tint = JournalColors.Gold,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                     DriveAuthButton(
                         isAuthenticated = viewModel.isDriveAuthenticated.collectAsState().value,
                         onSignIn = onGoogleSignIn,
-                        onSignOut = onGoogleSignOut
+                        onSignOut = onGoogleSignOut,
                     )
                     SyncIndicator(syncState = syncState, onSync = viewModel::syncNow)
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                    ),
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { onNavigateToEntry(viewModel.todayEntryId()) },
                 containerColor = JournalColors.Gold,
-                contentColor = JournalColors.Ink
+                contentColor = JournalColors.Ink,
             ) {
                 Icon(Icons.Default.Edit, contentDescription = "New entry")
             }
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             // Pending reviews banner
             if (pendingReviews.isNotEmpty()) {
                 item {
                     PendingReviewBanner(
                         count = pendingReviews.size,
-                        onClick = onNavigateToReview
+                        onClick = onNavigateToReview,
                     )
                 }
             }
@@ -107,7 +109,7 @@ fun HomeScreen(
             items(entries, key = { it.id }) { entry ->
                 EntryCard(
                     entry = entry,
-                    onClick = { onNavigateToEntry(entry.id) }
+                    onClick = { onNavigateToEntry(entry.id) },
                 )
             }
 
@@ -126,7 +128,7 @@ fun HomeScreen(
 private fun DriveAuthButton(
     isAuthenticated: Boolean,
     onSignIn: () -> Unit,
-    onSignOut: () -> Unit
+    onSignOut: () -> Unit,
 ) {
     if (isAuthenticated) {
         IconButton(onClick = onSignOut) {
@@ -134,7 +136,7 @@ private fun DriveAuthButton(
                 Icons.Default.CloudDone,
                 contentDescription = "Connected to Drive — tap to disconnect",
                 tint = JournalColors.Correct,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.dp),
             )
         }
     } else {
@@ -143,7 +145,7 @@ private fun DriveAuthButton(
                 Icons.Default.CloudOff,
                 contentDescription = "Connect Google Drive",
                 tint = JournalColors.Slate,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.dp),
             )
         }
     }
@@ -154,36 +156,41 @@ private fun DriveAuthButton(
 // ──────────────────────────────────────────────
 
 @Composable
-private fun PendingReviewBanner(count: Int, onClick: () -> Unit) {
+private fun PendingReviewBanner(
+    count: Int,
+    onClick: () -> Unit,
+) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = JournalColors.Signal.copy(alpha = 0.15f)
-        ),
-        shape = RoundedCornerShape(12.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = JournalColors.Signal.copy(alpha = 0.15f),
+            ),
+        shape = RoundedCornerShape(12.dp),
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Icon(
                 Icons.Default.Notifications,
                 contentDescription = null,
-                tint = JournalColors.Signal
+                tint = JournalColors.Signal,
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     "$count prediction${if (count > 1) "s" else ""} to review",
                     style = MaterialTheme.typography.titleMedium,
-                    color = JournalColors.Signal
+                    color = JournalColors.Signal,
                 )
                 Text(
                     "Time to close the loop",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Icon(Icons.Default.ChevronRight, null, tint = JournalColors.Signal)
@@ -196,33 +203,38 @@ private fun PendingReviewBanner(count: Int, onClick: () -> Unit) {
 // ──────────────────────────────────────────────
 
 @Composable
-private fun EntryCard(entry: JournalEntry, onClick: () -> Unit) {
+private fun EntryCard(
+    entry: JournalEntry,
+    onClick: () -> Unit,
+) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        shape = RoundedCornerShape(12.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+        shape = RoundedCornerShape(12.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     entry.date,
                     style = MaterialTheme.typography.labelSmall,
-                    color = JournalColors.Gold
+                    color = JournalColors.Gold,
                 )
                 if (entry.isDirty) {
                     Icon(
                         Icons.Default.CloudOff,
                         contentDescription = "Not synced",
                         tint = JournalColors.Slate,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(14.dp),
                     )
                 }
             }
@@ -247,7 +259,7 @@ private fun EntryCard(entry: JournalEntry, onClick: () -> Unit) {
                     entry.contextNote,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2
+                    maxLines = 2,
                 )
             }
         }
@@ -258,19 +270,20 @@ private fun EntryCard(entry: JournalEntry, onClick: () -> Unit) {
 private fun StatChip(
     count: Int,
     label: String,
-    color: androidx.compose.ui.graphics.Color
+    color: androidx.compose.ui.graphics.Color,
 ) {
     Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(color.copy(alpha = 0.15f))
-            .padding(horizontal = 8.dp, vertical = 3.dp)
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(color.copy(alpha = 0.15f))
+                .padding(horizontal = 8.dp, vertical = 3.dp),
     ) {
         Text(
             "$count $label",
             style = MaterialTheme.typography.labelSmall,
             color = color,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
         )
     }
 }
@@ -280,21 +293,30 @@ private fun StatChip(
 // ──────────────────────────────────────────────
 
 @Composable
-private fun SyncIndicator(syncState: SyncState, onSync: () -> Unit) {
+private fun SyncIndicator(
+    syncState: SyncState,
+    onSync: () -> Unit,
+) {
     when (syncState) {
-        is SyncState.Syncing -> CircularProgressIndicator(
-            modifier = Modifier.size(20.dp),
-            strokeWidth = 2.dp,
-            color = JournalColors.Gold
-        )
-        else -> IconButton(onClick = onSync) {
-            Icon(
-                Icons.Default.Sync,
-                contentDescription = "Sync",
-                tint = if (syncState is SyncState.LastSync && !syncState.success)
-                    JournalColors.Signal else JournalColors.Slate
+        is SyncState.Syncing ->
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                strokeWidth = 2.dp,
+                color = JournalColors.Gold,
             )
-        }
+        else ->
+            IconButton(onClick = onSync) {
+                Icon(
+                    Icons.Default.Sync,
+                    contentDescription = "Sync",
+                    tint =
+                        if (syncState is SyncState.LastSync && !syncState.success) {
+                            JournalColors.Signal
+                        } else {
+                            JournalColors.Slate
+                        },
+                )
+            }
     }
 }
 
@@ -305,22 +327,23 @@ private fun SyncIndicator(syncState: SyncState, onSync: () -> Unit) {
 @Composable
 private fun EmptyState() {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 64.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 64.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text("✦", fontSize = 32.sp, color = JournalColors.Gold)
         Text(
             "Begin your first entry",
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground
+            color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
             "Hypotheses. Decisions. Predictions.",
             style = MaterialTheme.typography.bodyMedium,
-            color = JournalColors.Slate
+            color = JournalColors.Slate,
         )
     }
 }

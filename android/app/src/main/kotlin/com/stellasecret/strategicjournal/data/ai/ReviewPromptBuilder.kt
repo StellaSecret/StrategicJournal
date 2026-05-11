@@ -4,8 +4,10 @@ import com.stellasecret.strategicjournal.domain.model.JournalEntry
 import com.stellasecret.strategicjournal.domain.model.ReviewPeriod
 
 object ReviewPromptBuilder {
-
-    fun build(entries: List<JournalEntry>, period: ReviewPeriod): String {
+    fun build(
+        entries: List<JournalEntry>,
+        period: ReviewPeriod,
+    ): String {
         val periodLabel = if (period == ReviewPeriod.WEEKLY) "past 7 days" else "past 30 days"
         val entriesBlock = formatEntries(entries)
 
@@ -63,7 +65,7 @@ STRICT RULES:
 - If a section has no data, return an empty array [] or null.
 - predictionSummary.accuracy: float 0.0-1.0, or null if no resolved predictions.
 - If total entries < 3, set all arrays to [] and add a single openLoop: "Insufficient data for pattern detection."
-        """.trimIndent()
+            """.trimIndent()
     }
 
     private fun formatEntries(entries: List<JournalEntry>): String =
@@ -84,7 +86,11 @@ STRICT RULES:
                     entry.decisions.forEach { d ->
                         appendLine("  • [${d.decisionType}] ${d.statement}")
                         if (d.rationale.isNotBlank()) appendLine("    Rationale: ${d.rationale}")
-                        if (!d.alternatives.isNullOrEmpty()) appendLine("    Alternatives considered: ${d.alternatives.joinToString(", ")}")
+                        if (!d.alternatives.isNullOrEmpty()) {
+                            appendLine(
+                                "    Alternatives considered: ${d.alternatives.joinToString(", ")}",
+                            )
+                        }
                         if (d.reversible) appendLine("    Reversible: yes")
                         if (!d.outcomeNote.isNullOrBlank()) appendLine("    Outcome: ${d.outcomeNote}")
                         if (d.wouldRepeat != null) appendLine("    Would repeat: ${d.wouldRepeat}")
@@ -103,8 +109,16 @@ STRICT RULES:
                     appendLine("PREDICTIONS:")
                     entry.predictions.forEach { p ->
                         appendLine("  • ${p.statement}")
-                        appendLine("    Expected: ${p.expectedOutcome} | Deadline: ${p.deadline} | Confidence: ${p.confidence}%")
-                        if (p.wasCorrect != null) appendLine("    Outcome: ${if (p.wasCorrect) "correct" else "wrong"} — ${p.actualOutcome ?: ""}")
+                        appendLine(
+                            "    Expected: ${p.expectedOutcome} | Deadline: ${p.deadline} | Confidence: ${p.confidence}%",
+                        )
+                        if (p.wasCorrect !=
+                            null
+                        ) {
+                            appendLine(
+                                "    Outcome: ${if (p.wasCorrect) "correct" else "wrong"} — ${p.actualOutcome ?: ""}",
+                            )
+                        }
                     }
                 }
 

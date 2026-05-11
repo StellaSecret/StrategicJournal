@@ -1,0 +1,53 @@
+# .editorconfig
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+indent_style = space
+indent_size = 4
+max_line_length = 120
+ktlint_code_style = ktlint_official
+
+# ── ktlint rule overrides ──────────────────────────────────────
+#
+# function-naming: Compose mandates PascalCase for @Composable functions
+# (they are effectively types, not regular functions). ktlint_official
+# enforces lowercase-first by default; suppress it project-wide since
+# the entire UI layer follows the Compose convention.
+ktlint_standard_function-naming = disabled
+
+# no-wildcard-imports: Compose APIs (androidx.compose.material3.*,
+# androidx.compose.foundation.layout.*, etc.) are designed to be used
+# with wildcard imports — explicit imports would be hundreds of lines.
+ktlint_standard_no-wildcard-imports = disabled
+
+# backing-property-naming: pre-existing pattern in JournalRepositoryImpl
+# (_syncState / syncState). Suppress rather than refactor existing code.
+ktlint_standard_backing-property-naming = disabled
+
+# value-parameter-comment: inline comments after constructor/function parameters
+# (e.g. `val accuracy: Float? = null, // 0.0–1.0`) are used throughout the
+# existing domain models (AiReview.kt, JournalEntry.kt) for documentation.
+# Cannot be auto-corrected, and the alternative (KDoc on each param) is
+# significantly more verbose for data classes. Disable project-wide.
+ktlint_standard_value-parameter-comment = disabled
+
+[*.{ts,tsx,js,jsx,json}]
+indent_style = space
+indent_size = 2
+
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{png,webp,jks}]
+insert_final_newline = false
+trim_trailing_whitespace = false
