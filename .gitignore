@@ -1,0 +1,28 @@
+# ─── Web ──────────────────────────────────────────────────────
+web/dist/
+web/node_modules/
+web/.vite/
+
+# E2E
+e2e/web/node_modules/
+e2e/web/playwright-report/
+e2e/web/test-results/
+
+# ─── Android ──────────────────────────────────────────────────
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.jks
+!android/app/release/*.jks.example
+
+# ─── ktlint cache (downloaded by scripts/download-ktlint.sh) ──
+.gradle/ktlint/
+
+# ─── IDE ──────────────────────────────────────────────────────
+.idea/
+*.iml
+
+# ─── OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

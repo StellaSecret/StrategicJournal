@@ -19,6 +19,10 @@ kotlinxCoroutines = "1.9.0"
 kotlinxSerialization = "1.7.3"
 datastore = "1.1.1"
 timber = "5.0.1"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+composeUiTestJunit4 = "1.7.5"
+hiltTesting = "2.51.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -50,6 +54,12 @@ kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "ko
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version = "1.6.2" }
+androidx-test-rules  = { group = "androidx.test", name = "rules",  version = "1.6.1" }
+androidx-compose-ui-test-junit4  = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hiltTesting" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
