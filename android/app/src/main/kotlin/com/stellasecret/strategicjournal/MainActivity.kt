@@ -2,6 +2,7 @@ package com.stellasecret.strategicjournal
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -27,34 +28,34 @@ import com.stellasecret.strategicjournal.presentation.screens.home.HomeScreen
 import com.stellasecret.strategicjournal.presentation.screens.review.ReviewScreen
 import com.stellasecret.strategicjournal.presentation.theme.StrategicJournalTheme
 import dagger.hilt.android.AndroidEntryPoint
-import timber.log.Timber
-import android.util.Log
 
 @Suppress("DEPRECATION")
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     companion object {
         val authStateChanged = mutableStateOf(false)
         private const val DRIVE_SCOPE_REQUEST_CODE = 9001
     }
 
     // Single launcher handles ALL sign-in results (both initial + scope request)
-    private val signInLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result: ActivityResult ->
-        Log.d("SJ_AUTH", "signInLauncher result received: resultCode="+result.resultCode)
-        handleSignInResult(result)
-    }
+    private val signInLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult(),
+        ) { result: ActivityResult ->
+            Log.d("SJ_AUTH", "signInLauncher result received: resultCode=" + result.resultCode)
+            handleSignInResult(result)
+        }
 
     private fun handleSignInResult(result: ActivityResult) {
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
         try {
             val account = task.getResult(ApiException::class.java)
-            val hasScope = GoogleSignIn.hasPermissions(
-                account, Scope(DriveScopes.DRIVE_APPDATA)
-            )
-            Log.d("SJ_AUTH", "Sign-in OK: email="+account.email+", hasDriveScope="+hasScope)
+            val hasScope =
+                GoogleSignIn.hasPermissions(
+                    account,
+                    Scope(DriveScopes.DRIVE_APPDATA),
+                )
+            Log.d("SJ_AUTH", "Sign-in OK: email=" + account.email + ", hasDriveScope=" + hasScope)
 
             if (hasScope) {
                 Toast.makeText(this, "Connected to Drive ✓", Toast.LENGTH_SHORT).show()
@@ -66,23 +67,28 @@ class MainActivity : ComponentActivity() {
                     this,
                     DRIVE_SCOPE_REQUEST_CODE,
                     account,
-                    Scope(DriveScopes.DRIVE_APPDATA)
+                    Scope(DriveScopes.DRIVE_APPDATA),
                 )
             }
         } catch (e: ApiException) {
-            Log.e("SJ_AUTH", "Sign-in failed: statusCode="+e.statusCode+", message="+e.message)
+            Log.e("SJ_AUTH", "Sign-in failed: statusCode=" + e.statusCode + ", message=" + e.message)
             Toast.makeText(this, "Sign-in failed (${e.statusCode})", Toast.LENGTH_SHORT).show()
         }
     }
 
     @Suppress("OVERRIDE_DEPRECATION")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?,
+    ) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == DRIVE_SCOPE_REQUEST_CODE) {
             val account = GoogleSignIn.getLastSignedInAccount(this)
-            val hasScope = account != null &&
-                GoogleSignIn.hasPermissions(account, Scope(DriveScopes.DRIVE_APPDATA))
-            Log.d("SJ_AUTH", "Drive scope result: hasScope="+hasScope)
+            val hasScope =
+                account != null &&
+                    GoogleSignIn.hasPermissions(account, Scope(DriveScopes.DRIVE_APPDATA))
+            Log.d("SJ_AUTH", "Drive scope result: hasScope=" + hasScope)
             if (hasScope) {
                 Toast.makeText(this, "Connected to Drive ✓", Toast.LENGTH_SHORT).show()
                 authStateChanged.value = !authStateChanged.value
@@ -105,10 +111,12 @@ class MainActivity : ComponentActivity() {
             return
         }
 
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .requestScopes(driveScope)
-            .build()
+        val gso =
+            GoogleSignInOptions
+                .Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .requestScopes(driveScope)
+                .build()
 
         Log.d("SJ_AUTH", "Launching sign-in intent...")
         signInLauncher.launch(GoogleSignIn.getClient(this, gso).signInIntent)
@@ -117,7 +125,9 @@ class MainActivity : ComponentActivity() {
     fun launchGoogleSignOut() {
         Log.d("SJ_AUTH", "launchGoogleSignOut called")
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
-        GoogleSignIn.getClient(this, gso).signOut()
+        GoogleSignIn
+            .getClient(this, gso)
+            .signOut()
             .addOnCompleteListener {
                 Log.d("SJ_AUTH", "Sign-out complete")
                 Toast.makeText(this, "Disconnected from Drive", Toast.LENGTH_SHORT).show()
@@ -142,12 +152,15 @@ object Routes {
     const val ENTRY = "entry?entryId={entryId}"
     const val REVIEW = "review"
     const val AI_REVIEW = "ai_review"
-    fun entry(entryId: String? = null) =
-        if (entryId != null) "entry?entryId=$entryId" else "entry"
+
+    fun entry(entryId: String? = null) = if (entryId != null) "entry?entryId=$entryId" else "entry"
 }
 
 @Composable
-fun AppNavHost(navController: NavHostController, activity: MainActivity) {
+fun AppNavHost(
+    navController: NavHostController,
+    activity: MainActivity,
+) {
     NavHost(navController = navController, startDestination = Routes.HOME) {
         composable(Routes.HOME) {
             HomeScreen(
@@ -155,18 +168,19 @@ fun AppNavHost(navController: NavHostController, activity: MainActivity) {
                 onNavigateToReview = { navController.navigate(Routes.REVIEW) },
                 onNavigateToAiReview = { navController.navigate(Routes.AI_REVIEW) },
                 onGoogleSignIn = { activity.launchGoogleSignIn() },
-                onGoogleSignOut = { activity.launchGoogleSignOut() }
+                onGoogleSignOut = { activity.launchGoogleSignOut() },
             )
         }
         composable(
             route = Routes.ENTRY,
-            arguments = listOf(
-                navArgument("entryId") {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                }
-            )
+            arguments =
+                listOf(
+                    navArgument("entryId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
         ) {
             EntryScreen(onBack = { navController.popBackStack() })
         }

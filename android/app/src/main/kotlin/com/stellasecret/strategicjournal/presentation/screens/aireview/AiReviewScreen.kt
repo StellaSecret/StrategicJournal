@@ -1,10 +1,6 @@
 package com.stellasecret.strategicjournal.presentation.screens.aireview
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,16 +20,16 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.stellasecret.strategicjournal.domain.model.AiReview
 import com.stellasecret.strategicjournal.domain.model.DecisionSentiment
+import com.stellasecret.strategicjournal.domain.model.RecurringTheme
 import com.stellasecret.strategicjournal.domain.model.ReviewPeriod
 import com.stellasecret.strategicjournal.domain.model.ReviewedDecision
-import com.stellasecret.strategicjournal.domain.model.RecurringTheme
 import com.stellasecret.strategicjournal.presentation.theme.JournalColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AiReviewScreen(
     onBack: () -> Unit,
-    viewModel: AiReviewViewModel = hiltViewModel()
+    viewModel: AiReviewViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -41,9 +37,21 @@ fun AiReviewScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = JournalColors.Gold, modifier = Modifier.size(18.dp))
-                        Text("AI Review", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Icon(
+                            Icons.Filled.AutoAwesome,
+                            contentDescription = null,
+                            tint = JournalColors.Gold,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Text(
+                            "AI Review",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
                     }
                 },
                 navigationIcon = {
@@ -51,22 +59,22 @@ fun AiReviewScreen(
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // Period selector + generate button
             item {
                 GenerateCard(
                     state = state,
                     onPeriodSelect = viewModel::selectPeriod,
-                    onGenerate = viewModel::generateReview
+                    onGenerate = viewModel::generateReview,
                 )
             }
 
@@ -112,17 +120,20 @@ fun AiReviewScreen(
                 }
 
                 // Raw fallback if structured parsing failed
-                if (review.topDecisions.isEmpty() && review.recurringThemes.isEmpty() && review.rawMarkdown.isNotBlank()) {
+                if (review.topDecisions.isEmpty() &&
+                    review.recurringThemes.isEmpty() &&
+                    review.rawMarkdown.isNotBlank()
+                ) {
                     item {
                         Card(
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
                         ) {
                             Text(
                                 review.rawMarkdown,
                                 modifier = Modifier.padding(16.dp),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = JournalColors.Slate
+                                color = JournalColors.Slate,
                             )
                         }
                     }
@@ -145,14 +156,13 @@ fun AiReviewScreen(
 private fun GenerateCard(
     state: AiReviewUiState,
     onPeriodSelect: (ReviewPeriod) -> Unit,
-    onGenerate: () -> Unit
+    onGenerate: () -> Unit,
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-
             // Period selector
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ReviewPeriod.entries.forEach { period ->
@@ -161,10 +171,11 @@ private fun GenerateCard(
                         selected = selected,
                         onClick = { onPeriodSelect(period) },
                         label = { Text(period.name.lowercase().replaceFirstChar { it.uppercase() }) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = JournalColors.Gold,
-                            selectedLabelColor = JournalColors.Ink
-                        )
+                        colors =
+                            FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = JournalColors.Gold,
+                                selectedLabelColor = JournalColors.Ink,
+                            ),
                     )
                 }
             }
@@ -172,21 +183,22 @@ private fun GenerateCard(
             // Quota indicator
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 repeat(3) { index ->
                     val filled = index < state.remainingGenerations
                     Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(if (filled) JournalColors.Gold else JournalColors.InkMuted)
+                        modifier =
+                            Modifier
+                                .size(8.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(if (filled) JournalColors.Gold else JournalColors.InkMuted),
                     )
                 }
                 Text(
                     "${state.remainingGenerations}/3 generations remaining this week",
                     style = MaterialTheme.typography.labelSmall,
-                    color = JournalColors.Slate
+                    color = JournalColors.Slate,
                 )
             }
 
@@ -195,21 +207,27 @@ private fun GenerateCard(
                 onClick = onGenerate,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !state.isLoading && state.remainingGenerations > 0,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = JournalColors.Gold,
-                    disabledContainerColor = JournalColors.InkMuted
-                )
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = JournalColors.Gold,
+                        disabledContainerColor = JournalColors.InkMuted,
+                    ),
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
                         color = JournalColors.Ink,
-                        strokeWidth = 2.dp
+                        strokeWidth = 2.dp,
                     )
                     Spacer(Modifier.width(8.dp))
                     Text("Analyzing...", color = JournalColors.Ink)
                 } else {
-                    Icon(Icons.Filled.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp), tint = JournalColors.Ink)
+                    Icon(
+                        Icons.Filled.AutoAwesome,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = JournalColors.Ink,
+                    )
                     Spacer(Modifier.width(8.dp))
                     Text("Generate ${state.selectedPeriod.name.lowercase()} review", color = JournalColors.Ink)
                 }
@@ -227,24 +245,24 @@ private fun ReviewHeader(review: AiReview) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Column {
             Text(
                 "${review.periodType.name.lowercase().replaceFirstChar { it.uppercase() }} Review",
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
             Text(
                 "${review.periodStart} → ${review.periodEnd}",
                 style = MaterialTheme.typography.labelSmall,
-                color = JournalColors.Slate
+                color = JournalColors.Slate,
             )
         }
         Text(
             "${review.entryCount} entries",
             style = MaterialTheme.typography.labelSmall,
-            color = JournalColors.Gold
+            color = JournalColors.Gold,
         )
     }
 }
@@ -255,27 +273,29 @@ private fun SectionTitle(title: String) {
         title.uppercase(),
         style = MaterialTheme.typography.labelSmall,
         color = JournalColors.Slate,
-        modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
+        modifier = Modifier.padding(top = 4.dp, bottom = 2.dp),
     )
 }
 
 @Composable
 private fun DecisionItem(decision: ReviewedDecision) {
-    val accentColor = when (decision.sentiment) {
-        DecisionSentiment.POSITIVE -> JournalColors.Correct
-        DecisionSentiment.NEGATIVE -> JournalColors.Wrong
-        else -> JournalColors.Slate
-    }
-    val sentimentIcon = when (decision.sentiment) {
-        DecisionSentiment.POSITIVE -> "↑"
-        DecisionSentiment.NEGATIVE -> "↓"
-        else -> "→"
-    }
+    val accentColor =
+        when (decision.sentiment) {
+            DecisionSentiment.POSITIVE -> JournalColors.Correct
+            DecisionSentiment.NEGATIVE -> JournalColors.Wrong
+            else -> JournalColors.Slate
+        }
+    val sentimentIcon =
+        when (decision.sentiment) {
+            DecisionSentiment.POSITIVE -> "↑"
+            DecisionSentiment.NEGATIVE -> "↓"
+            else -> "→"
+        }
 
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(10.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(sentimentIcon, color = accentColor, style = MaterialTheme.typography.titleMedium)
@@ -294,31 +314,31 @@ private fun ThemeItem(theme: RecurringTheme) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(10.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
             modifier = Modifier.padding(12.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(theme.theme, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                 Text(
                     theme.referenceDates.joinToString(", "),
                     style = MaterialTheme.typography.labelSmall,
-                    color = JournalColors.Slate
+                    color = JournalColors.Slate,
                 )
             }
             Surface(
                 color = JournalColors.Gold.copy(alpha = 0.15f),
-                shape = RoundedCornerShape(20.dp)
+                shape = RoundedCornerShape(20.dp),
             ) {
                 Text(
                     "×${theme.occurrences}",
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.labelMedium,
                     color = JournalColors.Gold,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }
@@ -330,7 +350,7 @@ private fun PredictionSummaryCard(ps: com.stellasecret.strategicjournal.domain.m
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(10.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -347,15 +367,26 @@ private fun PredictionSummaryCard(ps: com.stellasecret.strategicjournal.domain.m
 }
 
 @Composable
-private fun StatItem(label: String, value: String) {
+private fun StatItem(
+    label: String,
+    value: String,
+) {
     Column {
-        Text(value, style = MaterialTheme.typography.titleSmall, color = JournalColors.Gold, fontWeight = FontWeight.Bold)
+        Text(
+            value,
+            style = MaterialTheme.typography.titleSmall,
+            color = JournalColors.Gold,
+            fontWeight = FontWeight.Bold,
+        )
         Text(label, style = MaterialTheme.typography.labelSmall, color = JournalColors.Slate)
     }
 }
 
 @Composable
-private fun BulletItem(text: String, accent: Color = JournalColors.Slate) {
+private fun BulletItem(
+    text: String,
+    accent: Color = JournalColors.Slate,
+) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("•", color = accent, style = MaterialTheme.typography.bodyMedium)
         Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
@@ -367,13 +398,21 @@ private fun BulletItem(text: String, accent: Color = JournalColors.Slate) {
 // ──────────────────────────────────────────────
 
 @Composable
-private fun ErrorBanner(message: String, onDismiss: () -> Unit) {
+private fun ErrorBanner(
+    message: String,
+    onDismiss: () -> Unit,
+) {
     Card(
         colors = CardDefaults.cardColors(containerColor = JournalColors.Wrong.copy(alpha = 0.1f)),
-        shape = RoundedCornerShape(10.dp)
+        shape = RoundedCornerShape(10.dp),
     ) {
         Row(modifier = Modifier.padding(12.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(message, style = MaterialTheme.typography.bodySmall, color = JournalColors.Wrong, modifier = Modifier.weight(1f))
+            Text(
+                message,
+                style = MaterialTheme.typography.bodySmall,
+                color = JournalColors.Wrong,
+                modifier = Modifier.weight(1f),
+            )
             TextButton(onClick = onDismiss) { Text("Dismiss", style = MaterialTheme.typography.labelSmall) }
         }
     }
@@ -383,11 +422,20 @@ private fun ErrorBanner(message: String, onDismiss: () -> Unit) {
 private fun RateLimitBanner() {
     Card(
         colors = CardDefaults.cardColors(containerColor = JournalColors.Gold.copy(alpha = 0.1f)),
-        shape = RoundedCornerShape(10.dp)
+        shape = RoundedCornerShape(10.dp),
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Weekly limit reached", style = MaterialTheme.typography.labelMedium, color = JournalColors.Gold, fontWeight = FontWeight.SemiBold)
-            Text("You've used all 3 generations for this week. Resets on a 7-day rolling basis.", style = MaterialTheme.typography.bodySmall, color = JournalColors.Slate)
+            Text(
+                "Weekly limit reached",
+                style = MaterialTheme.typography.labelMedium,
+                color = JournalColors.Gold,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                "You've used all 3 generations for this week. Resets on a 7-day rolling basis.",
+                style = MaterialTheme.typography.bodySmall,
+                color = JournalColors.Slate,
+            )
         }
     }
 }
@@ -396,9 +444,19 @@ private fun RateLimitBanner() {
 private fun EmptyReviewState() {
     Box(modifier = Modifier.fillMaxWidth().padding(top = 48.dp), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = JournalColors.InkMuted, modifier = Modifier.size(40.dp))
+            Icon(
+                Icons.Filled.AutoAwesome,
+                contentDescription = null,
+                tint = JournalColors.InkMuted,
+                modifier = Modifier.size(40.dp),
+            )
             Text("No review generated yet", style = MaterialTheme.typography.bodyMedium, color = JournalColors.Slate)
-            Text("Select a period and hit Generate.", style = MaterialTheme.typography.bodySmall, color = JournalColors.InkMuted, textAlign = TextAlign.Center)
+            Text(
+                "Select a period and hit Generate.",
+                style = MaterialTheme.typography.bodySmall,
+                color = JournalColors.InkMuted,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
