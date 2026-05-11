@@ -15,7 +15,7 @@ data class JournalEntryEntity(
     val updatedAt: String,
     val jsonPayload: String, // Full serialized JournalEntry as JSON
     val isDirty: Boolean = false,
-    val driveFileId: String? = null
+    val driveFileId: String? = null,
 )
 
 // ──────────────────────────────────────────────
@@ -24,7 +24,6 @@ data class JournalEntryEntity(
 
 @Dao
 interface JournalEntryDao {
-
     @Query("SELECT * FROM journal_entries ORDER BY date DESC")
     fun observeAll(): Flow<List<JournalEntryEntity>>
 
@@ -48,7 +47,10 @@ interface JournalEntryDao {
     suspend fun upsert(entry: JournalEntryEntity)
 
     @Query("UPDATE journal_entries SET isDirty = 0, driveFileId = :fileId WHERE id = :id")
-    suspend fun markSynced(id: String, fileId: String)
+    suspend fun markSynced(
+        id: String,
+        fileId: String,
+    )
 
     @Query("DELETE FROM journal_entries WHERE id = :id")
     suspend fun deleteById(id: String)
@@ -61,7 +63,7 @@ interface JournalEntryDao {
 @Database(
     entities = [JournalEntryEntity::class],
     version = 1,
-    exportSchema = false
+    exportSchema = false,
 )
 abstract class StrategicJournalDatabase : RoomDatabase() {
     abstract fun journalEntryDao(): JournalEntryDao

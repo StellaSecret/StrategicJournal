@@ -11,7 +11,6 @@ import retrofit2.http.Query
 // ──────────────────────────────────────────────
 
 interface GeminiApi {
-
     /**
      * generateContent endpoint — Gemini 2.0 Flash (free tier).
      * Base URL: https://generativelanguage.googleapis.com/
@@ -19,7 +18,7 @@ interface GeminiApi {
     @POST("v1beta/models/gemini-2.0-flash:generateContent")
     suspend fun generateContent(
         @Query("key") apiKey: String,
-        @Body request: GeminiRequest
+        @Body request: GeminiRequest,
     ): GeminiResponse
 }
 
@@ -30,23 +29,25 @@ interface GeminiApi {
 @Serializable
 data class GeminiRequest(
     val contents: List<GeminiContent>,
-    @SerialName("generationConfig") val generationConfig: GenerationConfig = GenerationConfig()
+    @SerialName("generationConfig") val generationConfig: GenerationConfig = GenerationConfig(),
 )
 
 @Serializable
 data class GeminiContent(
     val role: String = "user",
-    val parts: List<GeminiPart>
+    val parts: List<GeminiPart>,
 )
 
 @Serializable
-data class GeminiPart(val text: String)
+data class GeminiPart(
+    val text: String,
+)
 
 @Serializable
 data class GenerationConfig(
-    val temperature: Float = 0.2f,      // Low: analytical, not creative
+    val temperature: Float = 0.2f, // Low: analytical, not creative
     @SerialName("maxOutputTokens") val maxOutputTokens: Int = 2048,
-    @SerialName("topP") val topP: Float = 0.8f
+    @SerialName("topP") val topP: Float = 0.8f,
 )
 
 // ──────────────────────────────────────────────
@@ -56,20 +57,25 @@ data class GenerationConfig(
 @Serializable
 data class GeminiResponse(
     val candidates: List<GeminiCandidate> = emptyList(),
-    @SerialName("promptFeedback") val promptFeedback: PromptFeedback? = null
+    @SerialName("promptFeedback") val promptFeedback: PromptFeedback? = null,
 )
 
 @Serializable
 data class GeminiCandidate(
     val content: GeminiContent,
-    @SerialName("finishReason") val finishReason: String = ""
+    @SerialName("finishReason") val finishReason: String = "",
 )
 
 @Serializable
 data class PromptFeedback(
-    @SerialName("blockReason") val blockReason: String? = null
+    @SerialName("blockReason") val blockReason: String? = null,
 )
 
 /** Extracts the text from the first candidate */
 fun GeminiResponse.extractText(): String =
-    candidates.firstOrNull()?.content?.parts?.firstOrNull()?.text ?: ""
+    candidates
+        .firstOrNull()
+        ?.content
+        ?.parts
+        ?.firstOrNull()
+        ?.text ?: ""

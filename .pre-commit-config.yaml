@@ -1,0 +1,66 @@
+# .pre-commit-config.yaml
+default_install_hook_types: [pre-commit, commit-msg]
+
+repos:
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ".*\\.md$"
+      - id: end-of-file-fixer
+        exclude: ".*\\.png$|.*\\.webp$|.*\\.jks$|^\\.idea/"
+      - id: check-merge-conflict
+      - id: check-yaml
+        files: ".*\\.ya?ml$"
+      - id: check-json
+        files: ".*\\.json$"
+        exclude: "package-lock\\.json$"
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: "^\\.idea/"
+
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.29.1
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  # ─────────────────────────────────────────────────────────────
+  # Web hooks
+  #
+  # Pre-commit runs hooks from the repo root. All three web hooks
+  # need to operate in web/ context. We use a vitest config file
+  # to exclude e2e tests rather than CLI flags (which differ by version).
+  # ─────────────────────────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: web-typecheck
+        name: "web: TypeScript type-check"
+        language: system
+        entry: web/node_modules/.bin/tsc --noEmit --project web/tsconfig.json
+        pass_filenames: false
+        files: "^web/.*\\.(ts|tsx)$"
+
+      - id: web-eslint
+        name: "web: ESLint"
+        language: system
+        entry: web/node_modules/.bin/eslint --max-warnings=0 --flag unstable_config_lookup_from_file
+        files: "^web/src/.*\\.(ts|tsx)$"
+
+      - id: web-vitest
+        name: "web: Vitest unit tests"
+        language: system
+        entry: web/node_modules/.bin/vitest run --reporter=verbose --config web/vitest.config.ts
+        pass_filenames: false
+        files: "^web/src/.*\\.(ts|tsx)$"
+
+  - repo: local
+    hooks:
+      - id: android-ktlint
+        name: "android: ktlint format"
+        language: system
+        entry: bash -c 'ROOT="$(git rev-parse --show-toplevel)"; java -jar "$ROOT/.gradle/ktlint/ktlint-1.3.1.jar" --format "$@"' -s --
+        types: [kotlin]
+        files: "^android/.*\\.kt$"
+        stages: [pre-commit]

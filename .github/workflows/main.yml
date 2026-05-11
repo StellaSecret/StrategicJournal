@@ -19,10 +19,76 @@ concurrency:
 
 jobs:
   # ─────────────────────────────────────────────────────────────
-  # 1. ANALYSE DE SÉCURITÉ (CodeQL & Audit)
+  # 0. PRE-COMMIT — lint & style gate (fast, no emulator needed)
+  # All other jobs wait for this to pass.
+  # ─────────────────────────────────────────────────────────────
+  pre_commit:
+    name: Pre-commit checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python (for pre-commit & commitizen)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup Node.js (for ESLint / tsc / vitest hooks)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Cache pre-commit environments
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Setup Java (for ktlint)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Cache ktlint jar
+        uses: actions/cache@v4
+        with:
+          path: .gradle/ktlint
+          key: ktlint-1.3.1
+
+      - name: Download ktlint jar
+        run: bash scripts/download-ktlint.sh
+
+      - name: ktlint check (CI gate)
+        # Read-only check — no file modifications. The formatter runs
+        # locally via the pre-commit hook before commits are pushed.
+        run: |
+          KTLINT_JAR="$GITHUB_WORKSPACE/.gradle/ktlint/ktlint-1.3.1.jar"
+          find android -name "*.kt" \
+            -not -path "*/.gradle/*" \
+            -not -path "*/build/*" \
+            | xargs java -jar "$KTLINT_JAR"
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run pre-commit on all files (skip ktlint — handled above)
+        env:
+          SKIP: android-ktlint
+        run: pre-commit run --all-files --show-diff-on-failure
+
+  # ─────────────────────────────────────────────────────────────
+  # 1. SECURITY ANALYSIS (CodeQL & Audit)
   # ─────────────────────────────────────────────────────────────
   security_scan:
     name: Security Analysis (SAST)
+    needs: pre_commit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -43,9 +109,9 @@ jobs:
         working-directory: android
         run: |
           wget -q "https://services.gradle.org/distributions/gradle-8.9-bin.zip" -O /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt/
-          echo "/opt/gradle-8.9/bin" >> $GITHUB_PATH
-          /opt/gradle-8.9/bin/gradle wrapper --gradle-version "8.9"
+          unzip -q /tmp/gradle.zip -d "$HOME/gradle-install"
+          echo "$HOME/gradle-install/gradle-8.9/bin" >> $GITHUB_PATH
+          "$HOME/gradle-install/gradle-8.9/bin/gradle" wrapper --gradle-version "8.9"
           chmod +x gradlew
 
       - name: Build for CodeQL (Android)
@@ -58,7 +124,7 @@ jobs:
         uses: github/codeql-action/analyze@v3
 
   # ─────────────────────────────────────────────────────────────
-  # 2. PIPELINE WEB (Build & Deploy)
+  # 2. WEB — unit tests + build
   # ─────────────────────────────────────────────────────────────
   web_pipeline:
     name: Web Pipeline
@@ -81,7 +147,7 @@ jobs:
           npm ci
           npm audit --audit-level=high
 
-      - name: Lint & Test
+      - name: Lint & Unit Tests
         working-directory: web
         run: |
           npm run type-check
@@ -95,25 +161,81 @@ jobs:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID_WEB }}
           VITE_APP_VERSION: ${{ github.sha }}
 
+      - name: Upload dist artifact (for E2E job)
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+          retention-days: 1
+
       - name: Upload Pages Artifact
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
         with:
           path: web/dist
 
-  deploy_web:
-    name: Deploy to GitHub Pages
+  # ─────────────────────────────────────────────────────────────
+  # 3. WEB E2E — Playwright
+  # ─────────────────────────────────────────────────────────────
+  web_e2e:
+    name: Web E2E (Playwright)
     needs: web_pipeline
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
     steps:
-      - name: Deploy
-        uses: actions/deploy-pages@v4
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Download web dist
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+
+      - name: Install E2E dependencies
+        working-directory: e2e/web
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: e2e/web
+        run: npx playwright install --with-deps chromium firefox
+
+      - name: Run Playwright tests
+        working-directory: e2e/web
+        env:
+          CI: true
+          # Absolute path so playwright.config.ts can start vite preview
+          # from the web directory regardless of the test runner's cwd.
+          WEB_DIR: ${{ github.workspace }}/web
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/web/playwright-report/
+          retention-days: 14
+
+      - name: Upload test results (JUnit)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-junit
+          path: e2e/web/test-results/results.xml
+          retention-days: 14
 
   # ─────────────────────────────────────────────────────────────
-  # 3. PIPELINE ANDROID (Test, Build & Release)
+  # 4. ANDROID — unit tests + build
   # ─────────────────────────────────────────────────────────────
   android_pipeline:
     name: Android Pipeline
@@ -136,9 +258,9 @@ jobs:
         working-directory: android
         run: |
           wget -q "https://services.gradle.org/distributions/gradle-8.9-bin.zip" -O /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt/
-          echo "/opt/gradle-8.9/bin" >> $GITHUB_PATH
-          gradle wrapper --gradle-version "8.9"
+          unzip -q /tmp/gradle.zip -d "$HOME/gradle-install"
+          echo "$HOME/gradle-install/gradle-8.9/bin" >> $GITHUB_PATH
+          "$HOME/gradle-install/gradle-8.9/bin/gradle" wrapper --gradle-version "8.9"
           chmod +x gradlew
 
       - name: Lint & Unit Tests
@@ -168,6 +290,19 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew bundleProdRelease assembleProdRelease --no-daemon
 
+      - name: Build Debug APK (for E2E)
+        working-directory: android
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: ./gradlew assembleDevDebug --no-daemon
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-dev-debug
+          path: android/app/build/outputs/apk/dev/debug/*.apk
+          retention-days: 1
+
       - name: Create GitHub Release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
@@ -175,9 +310,9 @@ jobs:
           tag_name: build-${{ github.run_number }}
           name: "Strategic Journal build #${{ github.run_number }}"
           body: |
-            Build automatique de la branche main.
-            📦 **AAB** pour Play Store
-            📱 **APK** pour installation manuelle
+            Automated build from the main branch.
+            📦 **AAB** for Play Store
+            📱 **APK** for sideloading
           files: |
             android/app/build/outputs/bundle/prodRelease/*.aab
             android/app/build/outputs/apk/prod/release/*.apk
@@ -185,6 +320,88 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Clean up
+      - name: Clean up keystore
         if: always()
         run: rm -f ${{ github.workspace }}/strategic-journal-release.jks
+
+  # ─────────────────────────────────────────────────────────────
+  # 5. ANDROID E2E — Compose UI tests on emulator
+  # ─────────────────────────────────────────────────────────────
+  android_e2e:
+    name: Android E2E (Compose UI)
+    needs: android_pipeline
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [30, 34]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Prepare Gradle Wrapper
+        working-directory: android
+        run: |
+          brew install wget 2>/dev/null || true
+          wget -q "https://services.gradle.org/distributions/gradle-8.9-bin.zip" -O /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d "$HOME/gradle-install"
+          echo "$HOME/gradle-install/gradle-8.9/bin" >> $GITHUB_PATH
+          "$HOME/gradle-install/gradle-8.9/bin/gradle" wrapper --gradle-version "8.9"
+          chmod +x gradlew
+
+      - name: Run Android E2E tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          profile: pixel_6
+          avd-name: e2e_pixel_${{ matrix.api-level }}
+          force-avd-creation: false
+          emulator-options: >
+            -no-window
+            -gpu swiftshader_indirect
+            -noaudio
+            -no-boot-anim
+          disable-animations: true
+          script: >
+            cd android &&
+            ./gradlew connectedDevDebugAndroidTest
+            -Pandroid.testInstrumentationRunnerArguments.class=com.stellasecret.strategicjournal.e2e
+            --no-daemon
+            2>&1 | tee e2e-output.log
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-e2e-results-api${{ matrix.api-level }}
+          path: |
+            android/app/build/reports/androidTests/
+            android/e2e-output.log
+          retention-days: 14
+
+  # ─────────────────────────────────────────────────────────────
+  # 6. DEPLOY to GitHub Pages (only on main, after all tests pass)
+  # ─────────────────────────────────────────────────────────────
+  deploy_web:
+    name: Deploy to GitHub Pages
+    needs: [web_e2e, android_e2e]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - name: Deploy
+        uses: actions/deploy-pages@v4
